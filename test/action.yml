@@ -1,0 +1,96 @@
+name: 'Flutter Test'
+description: 'Runs Flutter tests, generates coverage reports and deploys them if configured.'
+inputs:
+  dart-define:
+    description: 'Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.'
+    required: false
+    default: ''
+  dart-define-from-file:
+    description: 'The path of a .json or .env file containing key-value pairs that will be available as environment variables. These can be accessed using the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.'
+    required: false
+    default: ''
+  flavor:
+    description: 'The app flavor to use when running tests. This should match the flavor defined in your platform-specific build setup (e.g., product flavors in Android Gradle scripts or custom Xcode schemes).'
+    required: false
+    default: ''
+  concurrency:
+    description: 'The number of concurrent test processes to run. This will be ignored when running integration tests.'
+    required: false
+    default: '1'
+  timeout:
+    description: 'The default timeout for individual tests, specified either in seconds (e.g. "60s"), as a multiplier of the default test timeout (e.g. "2x"), or as the string "none" to disable test timeouts entirely. This value does not apply to the default test suite loading timeout.'
+    required: false
+    default: '60s'
+  ignore-timeouts:
+    description: 'Ignore all timeouts. Useful when testing a big application that requires a longer time to compile (e.g. running integration tests for a Flutter app).'
+    required: false
+    default: 'false'
+  run-coverage:
+    description: 'Run tests with coverage. Even if false, coverage will be generated if deploy-report is set to github-pages or artifact.'
+    required: false
+    default: 'false'
+  deploy-report:
+    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact.'
+    options:
+      - 'none'
+      - 'github-pages'
+      - 'artifact'
+    required: false
+    default: 'none'
+  github-token:
+    description: 'GitHub token with permissions to deploy to GitHub Pages. Required if deploy-report is set to github-pages.'
+    required: false
+    default: ''
+    
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Tests
+      if: inputs.run-coverage == 'false' && inputs.deploy-report == 'none'
+      run: |
+        flutter test . --concurrency=${{ inputs.concurrency }} \
+          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
+          ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
+          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
+          ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
+          ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
+          -r github
+          --no-pub
+
+    - name: Run Tests & Coverage
+      if: inputs.run-coverage == 'true' || inputs.deploy-report != 'none'
+      shell: bash
+      run: |
+        flutter test . --concurrency=${{ inputs.concurrency }} \
+          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
+          ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
+          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
+          ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
+          ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
+          -r github
+          --no-pub
+          --coverage
+
+    - name: Install genhtml
+      if: inputs.deploy-report != 'none'
+      run: |
+        sudo apt-get update
+        sudo apt-get install lcov
+
+    - name: Generate Coverage report
+      if: inputs.deploy-report != 'none'
+      run: |
+        genhtml coverage/lcov.info -o coverage/html
+
+    - name: Deploy Report to GitHub Pages
+      if: inputs.deploy-report == 'github-pages' 
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ inputs.github-token }}
+        publish_dir: ./coverage/html
+    
+    - name: Upload Coverage Report as Artifact
+      if: inputs.deploy-report == 'artifact' 
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
