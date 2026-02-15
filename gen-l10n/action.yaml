@@ -1,0 +1,37 @@
+name: Code Generation with l10n
+description: 'Automatically discovers and runs code generation using l10n for all Flutter packages in the repository.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Build Runner
+      run: |
+        # Find all packages in the repository
+        PACKAGES=$(find . -mindepth 1 -maxdepth 3 -type f -name "pubspec.yaml" | sed 's|/pubspec.yaml||')
+
+        if [ -z "$PACKAGES" ]; then
+          echo "No packages found with pubspec.yaml"
+          exit 1
+        fi
+
+        # Run gen-l10n on each package
+        for PACKAGE_DIR in $PACKAGES; do
+          echo "::group::Running gen-l10n in $PACKAGE_DIR"
+
+          # Check if the package has l10n dependency
+          if grep -q "l10n:" "$PACKAGE_DIR/pubspec.yaml"; then
+            cd "$PACKAGE_DIR"
+            echo "Running: flutter gen-l10n"
+            flutter gen-l10n
+            cd - > /dev/null
+            echo "✓ Completed gen-l10n for $PACKAGE_DIR"
+          else
+            echo "⊘ Skipping $PACKAGE_DIR (no l10n dependency)"
+          fi
+
+          echo "::endgroup::"
+        done
+
+        echo "gen-l10n completed for all packages"
+      shell: bash
+  
