@@ -1,0 +1,309 @@
+name: 'Flutter Multi-Platform Build & Deploy'
+description: 'Builds a Flutter app for iOS, Android, Web, and Desktop, and deploys it.'
+author: 'User'
+branding:
+  icon: 'layers'
+  color: 'blue'
+
+inputs:
+  flutter-version:
+    description: 'The Flutter version to use.'
+    required: true
+    default: 'stable'
+  working-directory:
+    description: 'The working directory of the Flutter project.'
+    required: false
+    default: '.'
+  flavor:
+    description: 'The build flavor.'
+    required: false
+  dart-defines:
+    description: 'Dart defines in KEY=VALUE format, one per line.'
+    required: false
+  build-name:
+    description: 'The build name.'
+    required: false
+  build-number:
+    description: 'The build number.'
+    required: false
+  pre-build-script:
+    description: 'Script to run before the build step.'
+    required: false
+  
+  # Deploy Targets
+  deploy-target-ios:
+    description: 'iOS Deployment target (store, firebase, artifact, none).'
+    required: false
+    default: 'store'
+  deploy-target-android:
+    description: 'Android Deployment target (store, firebase, artifact, none).'
+    required: false
+    default: 'firebase'
+  deploy-target-web:
+    description: 'Web Deployment target (firebase, artifact, none).'
+    required: false
+    default: 'firebase'
+  deploy-target-macos:
+    description: 'macOS Deployment target (store, artifact, none).'
+    required: false
+    default: 'artifact'
+  deploy-target-windows:
+    description: 'Windows Deployment target (store, artifact, none).'
+    required: false
+    default: 'artifact'
+  deploy-target-linux:
+    description: 'Linux Deployment target (store, artifact, none).'
+    required: false
+    default: 'artifact'
+
+  # Platforms
+  build-ios: { description: 'Build for iOS.', required: false, default: 'false' }
+  build-android: { description: 'Build for Android.', required: false, default: 'false' }
+  build-web: { description: 'Build for Web.', required: false, default: 'false' }
+  build-macos: { description: 'Build for macOS.', required: false, default: 'false' }
+  build-windows: { description: 'Build for Windows.', required: false, default: 'false' }
+  build-linux: { description: 'Build for Linux.', required: false, default: 'false' }
+
+  # iOS Signing
+  certificate-base64: { description: 'iOS P12 certificate.', required: false }
+  certificate-password: { description: 'iOS P12 password.', required: false }
+  provisioning-profile-base64: { description: 'iOS Provisioning Profile.', required: false }
+  export-options-plist: { description: 'Path to iOS ExportOptions.plist.', required: false }
+  
+  # Android Signing
+  keystore-base64: { description: 'Android Upload Keystore (base64).', required: false }
+  keystore-password: { description: 'Android Keystore Password.', required: false }
+  key-alias: { description: 'Android Key Alias.', required: false }
+  key-password: { description: 'Android Key Password.', required: false }
+
+  # App Store Connect
+  app-store-connect-issuer-id: { description: 'App Store Connect API Issuer ID.', required: false }
+  app-store-connect-key-id: { description: 'App Store Connect API Key ID.', required: false }
+  app-store-connect-private-key: { description: 'App Store Connect API Private Key.', required: false }
+
+  # Firebase
+  firebase-app-id: { description: 'Firebase App ID.', required: false }
+  firebase-service-credentials: { description: 'Firebase Service Account JSON.', required: false }
+  firebase-groups: { description: 'Firebase Tester Groups.', required: false }
+  firebase-release-notes: { description: 'Firebase Release Notes.', required: false }
+  firebase-hosting-target: { description: 'Firebase Hosting Target.', required: false }
+
+  # Testing & Coverage
+  run-tests: { description: 'Run Flutter tests with coverage.', required: false, default: 'false' }
+  publish-coverage-report: { description: 'Publish coverage report to GitHub Pages.', required: false, default: 'false' }
+  github-token: { description: 'GitHub Token for publishing to Pages.', required: false }
+  generate-docs: { description: 'Generate Dart API documentation.', required: false, default: 'false' }
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        channel: 'stable'
+        cache: true
+
+    - name: Install Dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: flutter pub get
+
+    - name: Run Pre-build Script
+      if: inputs.pre-build-script != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.pre-build-script }}
+
+    # Test & Docs
+    - name: Test & Docs
+      if: inputs.run-tests == 'true' || inputs.generate-docs == 'true'
+      uses: ./actions/test
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        run-coverage: ${{ inputs.run-tests }}
+        generate-docs: ${{ inputs.generate-docs }}
+
+    # iOS
+    - name: Build iOS
+      if: inputs.build-ios == 'true'
+      uses: ./actions/build
+      with:
+        platform: ios
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+        export-options-plist: ${{ inputs.export-options-plist }}
+
+    - name: Deploy iOS
+      if: inputs.build-ios == 'true' && inputs.deploy-target-ios != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: ios
+        target: ${{ inputs.deploy-target-ios }}
+        working-directory: ${{ inputs.working-directory }}
+        # Signing
+        certificate-base64: ${{ inputs.certificate-base64 }}
+        certificate-password: ${{ inputs.certificate-password }}
+        provisioning-profile-base64: ${{ inputs.provisioning-profile-base64 }}
+        # Keys
+        app-store-connect-issuer-id: ${{ inputs.app-store-connect-issuer-id }}
+        app-store-connect-key-id: ${{ inputs.app-store-connect-key-id }}
+        app-store-connect-private-key: ${{ inputs.app-store-connect-private-key }}
+        firebase-app-id: ${{ inputs.firebase-app-id }}
+        firebase-service-credentials: ${{ inputs.firebase-service-credentials }}
+        firebase-groups: ${{ inputs.firebase-groups }}
+        firebase-release-notes: ${{ inputs.firebase-release-notes }}
+
+    # Android
+    - name: Build Android
+      if: inputs.build-android == 'true'
+      uses: ./actions/build
+      with:
+        platform: android
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+
+    - name: Deploy Android
+      if: inputs.build-android == 'true' && inputs.deploy-target-android != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: android
+        target: ${{ inputs.deploy-target-android }}
+        working-directory: ${{ inputs.working-directory }}
+        # Signing
+        keystore-base64: ${{ inputs.keystore-base64 }}
+        keystore-password: ${{ inputs.keystore-password }}
+        key-alias: ${{ inputs.key-alias }}
+        key-password: ${{ inputs.key-password }}
+        # Keys
+        firebase-app-id: ${{ inputs.firebase-app-id }}
+        firebase-service-credentials: ${{ inputs.firebase-service-credentials }}
+        firebase-groups: ${{ inputs.firebase-groups }}
+        firebase-release-notes: ${{ inputs.firebase-release-notes }}
+
+    # Web
+    - name: Build Web
+      if: inputs.build-web == 'true'
+      uses: ./actions/build
+      with:
+        platform: web
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+
+    - name: Deploy Web
+      if: inputs.build-web == 'true' && inputs.deploy-target-web != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: web
+        target: ${{ inputs.deploy-target-web }}
+        working-directory: ${{ inputs.working-directory }}
+        firebase-service-credentials: ${{ inputs.firebase-service-credentials }}
+        firebase-hosting-target: ${{ inputs.firebase-hosting-target }}
+        firebase-release-notes: ${{ inputs.firebase-release-notes }}
+
+    # Desktop
+    - name: Build macOS
+      if: inputs.build-macos == 'true'
+      uses: ./actions/build
+      with:
+        platform: macos
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+
+    - name: Deploy macOS
+      if: inputs.build-macos == 'true' && inputs.deploy-target-macos != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: macos
+        target: ${{ inputs.deploy-target-macos }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Build Windows
+      if: inputs.build-windows == 'true'
+      uses: ./actions/build
+      with:
+        platform: windows
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+
+    - name: Deploy Windows
+      if: inputs.build-windows == 'true' && inputs.deploy-target-windows != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: windows
+        target: ${{ inputs.deploy-target-windows }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Build Linux
+      if: inputs.build-linux == 'true'
+      uses: ./actions/build
+      with:
+        platform: linux
+        flutter-version: ${{ inputs.flutter-version }}
+        working-directory: ${{ inputs.working-directory }}
+        flavor: ${{ inputs.flavor }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        dart-defines: ${{ inputs.dart-defines }}
+
+    - name: Deploy Linux
+      if: inputs.build-linux == 'true' && inputs.deploy-target-linux != 'none'
+      uses: ./actions/deploy
+      with:
+        platform: linux
+        target: ${{ inputs.deploy-target-linux }}
+        working-directory: ${{ inputs.working-directory }}
+
+    # Unified Pages Deployment
+    - name: Prepare GitHub Pages Content
+      if: inputs.publish-coverage-report == 'true' || inputs.generate-docs == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        mkdir -p gh_pages_payload
+        if [ "${{ inputs.publish-coverage-report }}" == "true" ] && [ -d "coverage/html" ]; then
+          mkdir -p gh_pages_payload/coverage
+          cp -r coverage/html/* gh_pages_payload/coverage/
+        fi
+        if [ "${{ inputs.generate-docs }}" == "true" ] && [ -d "doc/api" ]; then
+          mkdir -p gh_pages_payload/docs
+          cp -r doc/api/* gh_pages_payload/docs/
+        fi
+        # Index
+        echo "<html><body><h1>Project Documentation</h1><ul>" > gh_pages_payload/index.html
+        if [ -d "gh_pages_payload/coverage" ]; then
+          echo "<li><a href='coverage/index.html'>Coverage Report</a></li>" >> gh_pages_payload/index.html
+        fi
+        if [ -d "gh_pages_payload/docs" ]; then
+          echo "<li><a href='docs/index.html'>API Documentation</a></li>" >> gh_pages_payload/index.html
+        fi
+        echo "</ul></body></html>" >> gh_pages_payload/index.html
+
+    - name: Deploy to GitHub Pages
+      if: inputs.publish-coverage-report == 'true' || inputs.generate-docs == 'true'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ inputs.github-token }}
+        publish_dir: ${{ inputs.working-directory }}/gh_pages_payload
+        enable_jekyll: true
