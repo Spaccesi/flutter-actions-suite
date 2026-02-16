@@ -1,0 +1,75 @@
+name: 'Flutter Build'
+description: 'Builds a Flutter app for a specific platform.'
+inputs:
+  flutter-version:
+    description: 'The Flutter version to use.'
+    required: true
+    default: 'stable'
+  working-directory:
+    description: 'The working directory of the Flutter project.'
+    required: false
+    default: '.'
+  platform:
+    description: 'Platform to build (ios, android, web, macos, windows, linux).'
+    required: true
+  flavor:
+    description: 'The build flavor.'
+    required: false
+  dart-defines:
+    description: 'Dart defines in KEY=VALUE format, one per line.'
+    required: false
+  build-name:
+    description: 'The build name.'
+    required: false
+  build-number:
+    description: 'The build number.'
+    required: false
+  export-options-plist:
+    description: 'Path to iOS ExportOptions.plist (iOS only).'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        channel: 'stable'
+        cache: true
+
+    - name: Install Dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: flutter pub get
+
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        INPUT_FLAVOR: ${{ inputs.flavor }}
+        INPUT_BUILD_NAME: ${{ inputs.build-name }}
+        INPUT_BUILD_NUMBER: ${{ inputs.build-number }}
+        INPUT_DART_DEFINES: ${{ inputs.dart-defines }}
+        INPUT_EXPORT_OPTIONS_PLIST: ${{ inputs.export-options-plist }}
+      run: |
+        PLATFORM=${{ inputs.platform }}
+        SCRIPT_DIR="${{ github.action_path }}/../../scripts"
+        
+        case $PLATFORM in
+          ios)
+            $SCRIPT_DIR/ios/build.sh
+            ;;
+          android)
+            $SCRIPT_DIR/android/build.sh
+            ;;
+          web)
+            $SCRIPT_DIR/web/build.sh
+            ;;
+          macos|windows|linux)
+            $SCRIPT_DIR/desktop/build.sh $PLATFORM
+            ;;
+          *)
+            echo "Error: Unsupported platform '$PLATFORM'"
+            exit 1
+            ;;
+        esac

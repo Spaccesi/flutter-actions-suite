@@ -1,0 +1,34 @@
+name: Build iOS
+description: 'Builds an iOS app using Flutter.'
+inputs:
+  flavor:
+    description: 'The flavor to build (if applicable).'
+    required: false
+    default: ''
+  build-name:
+    description: 'The build name to use for the iOS app.'
+    required: false
+    default: ''
+  build-number:
+    description: 'The build number to use for the iOS app.'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  
+  steps:
+    - name: Signing Setup
+      run: |
+        echo "Setting up code signing for iOS build..."
+        # Add your code signing setup commands here, such as installing certificates and provisioning profiles.
+        # For example:
+        # security import /path/to/certificate.p12 -k ~/Library/Keychains/login.keychain -P ${{ secrets.CERT_PASSWORD }} -T /usr/bin/codesign
+        # mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        # cp /path/to/provisioning_profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+      shell: bash
+    - name: Build iOS App
+      run: |
+        flutter build ios \
+          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
+          ${{ inputs.build-name != '' && '--build-name=${{ inputs.build-name }}' || '' }} \
+          ${{ inputs.build-number != '' && '--build-number=${{ inputs.build-number }}' || '' }} \

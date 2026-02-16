@@ -1,0 +1,24 @@
+name: Build Linux
+description: 'Builds a Linux app using Flutter.'
+inputs:
+  flavor:
+    description: 'The flavor to build (if applicable).'
+    required: false
+    default: ''
+  build-name:
+    description: 'The build name to use for the Linux app.'
+    required: false
+    default: ''
+  build-number:
+    description: 'The build number to use for the Linux app.'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Linux App
+      run: |
+        flutter build linux \
+          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
+          ${{ inputs.build-name != '' && '--build-name=${{ inputs.build-name }}' || '' }} \
+          ${{ inputs.build-number != '' && '--build-number=${{ inputs.build-number }}' || '' }} 

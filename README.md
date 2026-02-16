@@ -4,117 +4,88 @@ This GitHub Action builds and deploys Flutter applications for iOS, Android, Web
 
 ## Features
 
-- **Multi-Platform**: Support for iOS, Android, Web, and Desktop.
-- **Pre-build hooks**: Run `build_runner` or other scripts before building.
+- **Multi-Platform**: Support for iOS, Android, Web, and Desktop (macOS, Windows, Linux).
+- **Modular Architecture**: Use the full pipeline or individual actions independently.
+- **Pre-build hooks**: Automatic `build_runner` and `gen-l10n` code generation.
 - **Signing**: Automated signing setup for iOS and Android.
+- **Testing**: Run tests with coverage reports, deployable to GitHub Pages or as artifacts.
+- **Documentation**: Generate project documentation with `dartdoc`.
 - **Deployment**:
     - iOS: App Store Connect, Firebase App Distribution.
     - Android: Firebase App Distribution.
     - Web: Firebase Hosting.
+    - macOS: App Store Connect
+    - Linux: Snap
+    - windows: Windwos Store
+
+## Modular Actions
+
+Each step of the pipeline is available as an independent action that you can use separately in your workflows. This gives you full control over your CI/CD pipeline.
+
+| Action | Path | Description |
+| --- | --- | --- |
+| **Analyze** | `/analyze` | Run static analysis and formatting checks. |
+| **Test** | `/test` | Run tests with optional coverage reports. |
+| **License** | `/license` | Check license of internal packages. |
+| **Build Runner** | `/build_runner` | Run `build_runner` code generation. |
+| **Gen L10n** | `/gen-l10n` | Run `gen-l10n` localization code generation. |
+| **Build** | `/build/{platform}` | Build for a specific platform. |
+| **Publish** | `/publish/{platform}` | Publish project. |
+| **Publish Firebase** | `/publish_firebase/{platform}` | Publish project on App Distribution. |
+| **Release** | `/release/{platform}` | Build and Publish project. |
+| **Docs** | `/docs` | Generate project documentation with `dartdoc`. |
 
 ## Usage
 
-```yaml
-name: Build & Deploy
+### Full Pipeline
 
-on:
-  push:
-    tags:
-      - 'v*'
+TODO
 
-jobs:
-  build_deploy:
-    runs-on: macos-latest # Required for iOS/macOS. Use ubuntu-latest if only building Android/Web/Linux.
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Build All
-        uses: ./ # Or your-username/your-repo@v1
-        with:
-          flutter-version: '3.19.0'
-          flavor: 'production'
-          
-          # Platforms to build
-          build-ios: 'true'
-          build-android: 'true'
-          build-web: 'true'
-          
-          # Pre-build
-          pre-build-script: |
-            flutter pub run build_runner build --delete-conflicting-outputs
+### Using Individual Actions
 
-          # Deployment
-          deploy-target: 'firebase' # for mobile
-          
-          # iOS Secrets
-          certificate-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          provisioning-profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          
-          # Android Secrets
-          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          keystore-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+TODO
 
-          # Firebase
-          firebase-app-id: ${{ secrets.FIREBASE_APP_ID }}
-          firebase-service-credentials: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS }}
-          firebase-groups: 'qa-team'
-```
+### Build for a Specific Platform
 
-## Inputs
+TODO
 
-### General
-| Input | Description | Default |
-| --- | --- | --- |
-| `flutter-version` | Flutter version. | `stable` |
-| `working-directory` | Path to project root. | `.` |
-| `flavor` | Build flavor. | |
-| `dart-defines` | Dart defines (`KEY=VALUE`). | |
-| `build-name` | Version Name. | |
-| `build-number` | Version Number. | |
-| `pre-build-script` | Script to run before build. | |
-| `deploy-target` | `appstore`, `firebase`, or `both`. | `appstore` |
+## Action Reference
 
-### Platforms (Boolean)
-| Input | Default |
-| --- | --- |
-| `build-ios` | `false` |
-| `build-android` | `false` |
-| `build-web` | `false` |
-| `build-macos` | `false` |
-| `build-windows` | `false` |
-| `build-linux` | `false` |
+### Root Action (`./`)
 
-### iOS Configuration
-| Input | Description |
-| --- | --- |
-| `certificate-base64` | P12 Certificate. |
-| `certificate-password` | P12 Password. |
-| `provisioning-profile-base64` | Provisioning Profile. |
-| `export-options-plist` | Path to ExportOptions.plist. |
-| `app-store-connect-*` | App Store Connect API Headers. |
+TODO
 
-### Android Configuration
-| Input | Description |
-| --- | --- |
-| `keystore-base64` | Upload Keystore (base64). |
-| `keystore-password` | Store Password. |
-| `key-alias` | Key Alias. |
-| `key-password` | Key Password. |
 
-### Firebase Configuration
-| Input | Description |
-| --- | --- |
-| `firebase-app-id` | App ID (Mobile). |
-| `firebase-service-credentials` | Service Account JSON. |
-| `firebase-groups` | Tester Groups. |
-| `firebase-release-notes` | Release Notes. |
-| `firebase-hosting-target` | Hosting Target (Web). |
+### Analyze (`analyze`)
+
+TODO
+
+### Test (`test`)
+
+TODO
+
+### Build Runner (`build_runner`)
+
+TODO
+
+### Gen L10n (`gen-l10n`)
+
+TODO
+
+### Build (`build/{platform}`)
+
+TODO
+
+### Publish (`build/{platform}`)
+
+TODO
+
+### Docs (`docs`)
+
+TODO
 
 ## Notes
+
 - To build for **macOS/iOS**, you must run on a `macos` runner.
 - To build for **Windows**, you must run on a `windows` runner.
-- To build for **Linux**, use `ubuntu` runner.
-- If you select multiple disparate platforms (e.g., Windows + iOS) in one job, it will likely fail unless you use a matrix strategy in your workflow calling this action, or use a self-hosted runner with cross-compilation capabilities (which is limited for Flutter).
+- To build for **Linux**, use an `ubuntu` runner.
