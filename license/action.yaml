@@ -1,1 +1,18 @@
-# TODO
+name: Check license
+description: Check that all dependencies licenses are compatible with the project. https://pub.dev/packages/license_checker is used to check the licenses of the dependencies. The action can be configured to fail if incompatible licenses are found or to just print a warning. A file containing a list of compatible licenses can also be provided.
+inputs:
+  compatible-licenses-conf-path:
+    description: 'Path to a file containing a list of compatible licenses.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install package to check licenses
+      run: dart pub global activate license_checker
+      shell: bash
+
+    - name: Check licenses
+      shell: bash
+      run: |
+        lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }}

@@ -1,1 +1,25 @@
-# TODO
+permittedLicenses:
+  - MIT
+  - BSD-3-Clause
+
+approvedPackages:
+  Apache-2.0:
+    - barbecue
+
+rejectedLicenses:
+  - GPL
+
+copyrightNotice:
+  mlb: "2000 MLB."
+
+packageLicenseOverride:
+  dodgers: BSD-3-Clause
+
+packageSourceOverride:
+  dodgers: https://dodgers.com
+
+omitDisclaimer:
+  - angles
+
+# This file is an example of a license configuration file for the license_checker action. It contains a list of compatible licenses, approved packages, rejected licenses, copyright notices, package license overrides, package source overrides, and packages to omit from the disclaimer. You can customize this file according to your project's needs and provide the path to it in the compatible-licenses-conf-path input of the license_checker action.
+# For more information on how to configure the license_checker action, please refer to the documentation: https://pub.dev/packages/license_checker.
