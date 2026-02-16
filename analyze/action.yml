@@ -4,11 +4,15 @@ inputs:
   treat-infos-as-fatal:
     description: 'Whether to treat info level issues as fatal.'
     required: false
-    default: true
+    default: 'true'
   treat-warnings-as-fatal:
     description: 'Whether to treat warning level issues as fatal.'
     required: false
-    default: true
+    default: 'true'
+  no-pub:
+    description: 'Whether to skip running pub get before analysis. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -18,5 +22,5 @@ runs:
         flutter analyze . \
           ${{ inputs.treat-infos-as-fatal == 'false' && '--no-fatal-infos' || '' }} \
           ${{ inputs.treat-warnings-as-fatal == 'false' && '--no-fatal-warnings' || '' }} \
-          --no-pub
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }}
       shell: bash
