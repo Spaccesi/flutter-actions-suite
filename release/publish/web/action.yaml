@@ -1,0 +1,37 @@
+name: Publish web app
+description: Publish the web app to GitHub Pages
+inputs:
+  github_token:
+    description: 'GitHub token with permissions to publish to GitHub Pages'
+    required: false
+  publish-target:
+    description: 'The target branch to publish to (default: artifact, options: gh-pages, artifact, firebase)'
+    required: false
+    default: 'artifact'
+runs:
+  using: 'composite'
+  steps:
+    - name: Publish to GitHub Pages
+      shell: bash
+      if: ${{ inputs.publish-target == 'gh-pages' }}
+      run: |
+        echo "Publishing to GitHub Pages..."
+        # Add your commands to publish to GitHub Pages here
+        # For example, you can use the actions-gh-pages action or custom scripts
+        
+
+    - name: Publish to Artifact Repository
+      shell: bash
+      if: ${{ inputs.publish-target == 'artifact' }}
+      run: |
+        echo "Publishing to Artifact Repository..."
+        # Add your commands to publish to your artifact repository here
+        # For example, you can use npm publish, Maven deploy, etc.
+
+    - name: Publish to Firebase Hosting
+      shell: bash
+      if: ${{ inputs.publish-target == 'firebase' }}
+      run: |
+        echo "Publishing to Firebase Hosting..."
+        # Add your commands to publish to Firebase Hosting here
+        # For example, you can use the Firebase CLI to deploy your app

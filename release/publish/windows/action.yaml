@@ -27,13 +27,17 @@ runs:
     - uses: microsoft/setup-msstore-cli@v1.3
 
     - name: Configure MS Store CLI
-    - run: msstore reconfigure --tenantId ${{ inputs.partner-center-tenant-id }} --sellerId ${{ inputs.partner-center-seller-id }} --clientId ${{ inputs.partner-center-client-id }} --clientSecret ${{ inputs.partner-center-client-secret }}
+      shell: bash
+      run: msstore reconfigure --tenantId ${{ inputs.partner-center-tenant-id }} --sellerId ${{ inputs.partner-center-seller-id }} --clientId ${{ inputs.partner-center-client-id }} --clientSecret ${{ inputs.partner-center-client-secret }}
 
     - name: Install Dart dependencies
+      shell: bash
       run: flutter pub get
       
     - name: Create MSIX package
+      shell: bash
       run: msstore package .
 
     - name: Publish MSIX to the Microsoft Store
+      shell: bash
       run: msstore publish --appId ${{ inputs.ms-store-app-id }} -v

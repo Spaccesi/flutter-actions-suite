@@ -41,6 +41,7 @@ runs:
         encodedString: ${{ inputs.android-keystore-base64 }}
         
     - name: Create key.properties file
+      shell: bash
       run: |
         echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
         echo "storePassword=${{ inputs.android-store-password }}" >> android/key.properties
@@ -48,6 +49,7 @@ runs:
         echo "keyAlias=${{ inputs.android-key-alias }}" >> android/key.properties
 
     - name: Create local.properties file
+      shell: bash
       run: |
         echo '${{ inputs.android-local-properties-file }}' > android/local.properties
 
@@ -57,6 +59,7 @@ runs:
         java-version: '${{ inputs.java-version }}'
 
     - name: Start Android Release Build
+      shell: bash
       run: |
         flavor_arg=""
         if [[ "${{ inputs.flavor }}" != "" ]]; then
