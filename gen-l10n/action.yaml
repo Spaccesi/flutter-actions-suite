@@ -85,6 +85,7 @@ runs:
         done
 
         if [ "$HAS_ERROR" = true ]; then
+          echo "One or more packages have untranslated messages. Failing the action."
           exit 1
         fi
       shell: bash
