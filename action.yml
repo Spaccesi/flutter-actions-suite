@@ -9,7 +9,6 @@ inputs:
   flutter-version:
     description: 'The Flutter version to use.'
     required: true
-    default: 'latest'
   flutter-channel:
     description: 'The Flutter channel to use (stable, beta, dev, master).'
     required: false
@@ -34,19 +33,20 @@ runs:
         cache: true
     
     - name: Prepare Repository
-      uses: ./prepare
+      uses: Spaccesi/flutter-actions-suite/prepare@main
       with:
         build-runner: 'true'
         gen-l10n: 'true'
         gen-l10n-fails-if-untranslated: 'false'
 
     - name: Run Checks
-      uses: ./check
+      uses: Spaccesi/flutter-actions-suite/check@main
       with:
         analyze: 'true'
         analyze-fails-if-infos: 'false'
         analyze-fails-if-warnings: 'false'
         license: 'false'
+        compatible-licenses-conf-path: ''
         license-fails-on-warnings: 'false'
         license-fails-on-info: 'false'
         test: 'true'

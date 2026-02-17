@@ -73,14 +73,14 @@ runs:
   steps:
     - name: Run Analyze
       if: ${{ inputs.analyze == 'true' }}
-      uses: ./analyze
+      uses: Spaccesi/flutter-actions-suite/check/analyze@main
       with:
         treat-infos-as-fatal: ${{ inputs.analyze-fails-if-infos }}
         treat-warnings-as-fatal: ${{ inputs.analyze-fails-if-warnings }}
 
     - name: Check Licenses
       if: ${{ inputs.license == 'true' }}
-      uses: ./license
+      uses: Spaccesi/flutter-actions-suite/check/license@main
       with:
         compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
         fail-on-warnings: ${{ inputs.license-fails-on-warnings }}
@@ -88,7 +88,7 @@ runs:
         
     - name: Run Tests
       if: ${{ inputs.test == 'true' }}
-      uses: ./test
+      uses: Spaccesi/flutter-actions-suite/check/test@main
       with:
         dart-define: ${{ inputs.dart-define }}
         dart-define-from-file: ${{ inputs.dart-define-from-file }}
