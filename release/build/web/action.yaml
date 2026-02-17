@@ -49,13 +49,13 @@ runs:
       shell: bash
       run: |
         flutter build web \
-          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}'  }} \
-          ${{ inputs.build-number  != '' &&'--build-number=${{ inputs.build-number }}' }} \
-          ${{ inputs.target != '' && '-t ${{ inputs.target}}' }} \
-          ${{ inputs.build-name && '--build-name=${{ inputs.build-name }}' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' }} \
-          ${{ inputs.base-href != '' && '--base-href=${{ inputs.base-href }}' }}\
-          ${{ inputs.static-assets-url != '' &&'--static-assets-url=${{ inputs.static-assets-url }}' }} \
+          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
+          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
+          ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
+          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
+          ${{ inputs.base-href != '' && format('--base-href={0}', inputs.base-href) || '' }} \
+          ${{ inputs.static-assets-url != '' && format('--static-assets-url={0}', inputs.static-assets-url) || '' }} \
           --pwa-strategy=${{ inputs.pwa-strategy }} \
-          ${{ inputs.wasm == 'true' && '--web-renderer=wasm' }} \
+          ${{ inputs.wasm == 'true' && '--wasm' || '' }} \
           --output=${{ inputs.output || 'build/web' }}
