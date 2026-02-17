@@ -14,80 +14,15 @@ inputs:
     description: 'The Flutter channel to use (stable, beta, dev, master).'
     required: false
     default: 'stable'
-  flavor:
-    description: 'The build flavor.'
-    required: false
-  dart-defines:
-    description: 'Dart defines in KEY=VALUE format, one per line.'
-    required: false
-  build-name:
-    description: 'The build name.'
-    required: false
-  build-number:
-    description: 'The build number.'
-    required: false
   github-token:
     description: 'GitHub token with permissions to deploy to GitHub Pages. Required if publish-coverage-report is set to true.'
     required: false
     default: ''
   deploy-coverage-report:
-    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact.'
-    options:
-      - 'none'
-      - 'github-pages'
-      - 'artifact'
+    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact. Available options: none, github-pages, artifact. If set to github-pages, the report will be deployed to GitHub Pages using the provided GitHub token. If set to artifact, the report will be uploaded as an artifact of the workflow run. If set to none, no report will be generated or deployed.'
     required: false
     default: 'none'
-  deploy-android:
-    description: 'Whether to build and deploy Android. Requires additional configuration for signing and publishing.'
-    required: false
-    options:
-      - 'none'
-      - 'store'
-      - 'firebase'
-    default: 'none'
-  deploy-ios:
-    description: 'Whether to build and deploy iOS. Requires additional configuration for signing and publishing
-    required: false
-    options:
-      - 'none'
-      - 'store'
-      - 'firebase'
-    default: 'none'
-  deploy-web:
-    description: 'Whether to build and deploy Web. Requires additional configuration for hosting and publishing.'
-    required: false
-    options:
-      - 'none'
-      - 'github-pages'
-      - 'firebase'
-    default: 'none'
-  deploy-macos:
-    description: 'Whether to build and deploy macOS. Requires additional configuration for signing and publishing.'
-    required: false
-    options:
-      - 'none'
-      - 'store'
-    default: 'none'
-  deploy-windows:
-    description: 'Whether to build and deploy Windows. Requires additional configuration for signing and publishing.'
-    required: false
-    options:
-      - 'none'
-      - 'store'
-    default: 'none'
-  deploy-linux:
-    description: 'Whether to build and deploy Linux. Requires additional configuration for signing and publishing.'
-    required: false
-    options:
-      - 'none'
-      - 'store'
-    default: 'none'
-  run-tests:
-    description: 'Whether to run tests.'
-    required: false
-    default: true
-
+ 
 runs:
   using: 'composite'
   steps:
@@ -97,4 +32,24 @@ runs:
         flutter-version: ${{ inputs.flutter-version }}
         channel: ${{ inputs.flutter-channel }}
         cache: true
-# TODO
+    
+    - name: Prepare Repository
+      uses: ./prepare
+      with:
+        build-runner: 'true'
+        gen-l10n: 'true'
+        gen-l10n-fails-if-untranslated: 'false'
+
+    - name: Run Checks
+      uses: ./check
+      with:
+        analyze: 'true'
+        analyze-fails-if-infos: 'false'
+        analyze-fails-if-warnings: 'false'
+        license: 'false'
+        license-fails-on-warnings: 'false'
+        license-fails-on-info: 'false'
+        test: 'true'
+        run-coverage: 'true'
+        deploy-report: ${{ inputs.deploy-coverage-report }}
+        github-token: ${{ inputs.github-token }}

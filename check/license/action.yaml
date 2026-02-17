@@ -1,0 +1,54 @@
+name: Check license
+description: Check that all dependencies licenses are compatible with the project. https://pub.dev/packages/license_checker is used to check the licenses of the dependencies. The action can be configured to fail if incompatible licenses are found or to just print a warning. A file containing a list of compatible licenses can also be provided.
+inputs:
+  compatible-licenses-conf-path:
+    description: 'Path to a file containing a list of compatible licenses.'
+    required: true
+  fail-on-warnings:
+    description: 'Whether to fail the action if warnings are found.'
+    required: false
+    default: 'false'
+  fail-on-info:
+    description: 'Whether to fail the action if info messages are found.'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install package to check licenses
+      run: dart pub global activate license_checker
+      shell: bash
+
+    - name: Check licenses
+      shell: bash
+      run: |
+        # Run license check and capture output
+        OUTPUT=$(lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }})
+        EXIT_CODE=$?
+        
+        # Print output to console
+        echo "$OUTPUT"
+        
+        HAS_FAILURE=false
+        
+        # Check for warnings if configured to fail
+        if [[ "${{ inputs.fail-on-warnings }}" == "true" ]]; then
+          if echo "$OUTPUT" | grep -qi "warning"; then
+            echo "::error::Failing due to warnings in license check."
+            HAS_FAILURE=true
+          fi
+        fi
+        
+        # Check for info if configured to fail
+        if [[ "${{ inputs.fail-on-info }}" == "true" ]]; then
+          if echo "$OUTPUT" | grep -qi "info"; then
+            echo "::error::Failing due to info messages in license check."
+            HAS_FAILURE=true
+          fi
+        fi
+        
+        # Exit with error if any condition met or if tool itself failed
+        if [ "$HAS_FAILURE" = true ] || [ $EXIT_CODE -ne 0 ]; then
+          exit 1
+        fi

@@ -1,0 +1,32 @@
+name: Prepare Flutter Repository
+description: 'Prepares the Flutter repository by running code generation and localization tasks.'
+inputs:
+  build-runner:
+    description: 'Whether to run build_runner for code generation. Automatically discovers and runs build_runner for all Flutter packages in the repository.'
+    required: false
+    default: 'true'
+  gen-l10n:
+    description: 'Whether to run gen-l10n for localization code generation. Automatically discovers and runs gen-l10n for all Flutter packages in the repository.'
+    required: false
+    default: 'true'
+  gen-l10n-fails-if-untranslated:
+    description: 'Whether to fail the gen-l10n step if untranslated strings are found. This will check for the presence of an untranslated-messages-file in the l10n configuration and fail if any untranslated messages are found.'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      run: flutter pub get
+      shell: bash
+      
+    - name: Run Build Runner
+      if: ${{ inputs.build-runner == 'true' }}
+      uses: ./build_runner  
+
+    - name: Run gen-l10n
+      if: ${{ inputs.gen-l10n == 'true' }}
+      uses: ./gen-l10n
+      with:
+        fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}

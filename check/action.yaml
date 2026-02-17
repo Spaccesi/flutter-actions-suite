@@ -1,0 +1,102 @@
+name: Check Flutter project
+description: 'Runs a series of checks on the Flutter project, including static analysis, license compatibility, unit tests and widget tests.'
+inputs:
+  analyze:
+    description: 'Whether to run flutter analyze. If false, the analyze step will be skipped.'
+    required: false
+    default: 'true'
+  license:
+    description: 'Whether to run license check. If false, the license check step will be skipped.'
+    required: false
+    default: 'true'
+  test:
+    description: 'Whether to run flutter test. If false, the test step will be skipped.'
+    required: false
+    default: 'true'
+  analyze-fails-if-infos:
+    description: 'Whether to fail the analyze step if info level issues are found.'
+    required: false
+    default: 'true'
+  analyze-fails-if-warnings:
+    description: 'Whether to fail the analyze step if warning level issues are found.'
+    required: false
+    default: 'true'
+  license-fails-on-warnings:
+    description: 'Whether to fail the license check step if warnings are found.'
+    required: false
+    default: 'false'
+  license-fails-on-info:
+    description: 'Whether to fail the license check step if info messages are found.'
+    required: false
+    default: 'false'
+  compatible-licenses-conf-path:
+    description: 'Path to a file containing a list of compatible licenses for the license check step.'
+    required: true 
+  dart-define:
+    description: 'Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.'
+    required: false
+    default: ''
+  dart-define-from-file:
+    description: 'The path of a .json or .env file containing key-value pairs that will be available as environment variables. These can be accessed using the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.'
+    required: false
+    default: ''
+  flavor:
+    description: 'The app flavor to use when running tests. This should match the flavor defined in your platform-specific build setup (e.g., product flavors in Android Gradle scripts or custom Xcode schemes).'
+    required: false
+    default: ''
+  concurrency:
+    description: 'The number of concurrent test processes to run. This will be ignored when running integration tests.'
+    required: false
+    default: '1'
+  timeout:
+    description: 'The default timeout for individual tests, specified either in seconds (e.g. "60s"), as a multiplier of the default test timeout (e.g. "2x"), or as the string "none" to disable test timeouts entirely. This value does not apply to the default test suite loading timeout.'
+    required: false
+    default: '60s'
+  ignore-timeouts:
+    description: 'Ignore all timeouts. Useful when testing a big application that requires a longer time to compile (e.g. running integration tests for a Flutter app).'
+    required: false
+    default: 'false'
+  run-coverage:
+    description: 'Run tests with coverage. Even if false, coverage will be generated if deploy-report is set to github-pages or artifact.'
+    required: false
+    default: 'false'
+  deploy-report:
+    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact. If set to github-pages, the report will be deployed to GitHub Pages using the provided GitHub token. If set to artifact, the report will be uploaded as an artifact of the workflow run. If set to none, no report will be generated or deployed.'
+    required: false
+    default: 'none'
+  github-token:
+    description: 'GitHub token with permissions to deploy to GitHub Pages. Required if deploy-report is set to github-pages.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Analyze
+      if: ${{ inputs.analyze == 'true' }}
+      uses: ./analyze
+      with:
+        treat-infos-as-fatal: ${{ inputs.analyze-fails-if-infos }}
+        treat-warnings-as-fatal: ${{ inputs.analyze-fails-if-warnings }}
+
+    - name: Check Licenses
+      if: ${{ inputs.license == 'true' }}
+      uses: ./license
+      with:
+        compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
+        fail-on-warnings: ${{ inputs.license-fails-on-warnings }}
+        fail-on-info: ${{ inputs.license-fails-on-info }}
+        
+    - name: Run Tests
+      if: ${{ inputs.test == 'true' }}
+      uses: ./test
+      with:
+        dart-define: ${{ inputs.dart-define }}
+        dart-define-from-file: ${{ inputs.dart-define-from-file }}
+        flavor: ${{ inputs.flavor }}
+        concurrency: ${{ inputs.concurrency }}
+        timeout: ${{ inputs.timeout }}
+        ignore-timeouts: ${{ inputs.ignore-timeouts }}
+        run-coverage: ${{ inputs.run-coverage }}
+        deploy-report: ${{ inputs.deploy-report }}
+        github-token: ${{ inputs.github-token }}
+  

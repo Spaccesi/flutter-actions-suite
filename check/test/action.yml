@@ -36,7 +36,6 @@ inputs:
   github-token:
     description: 'GitHub token with permissions to deploy to GitHub Pages. Required if deploy-report is set to github-pages.'
     required: false
-    default: ''
     
 runs:
   using: 'composite'
