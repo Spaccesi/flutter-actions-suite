@@ -16,76 +16,68 @@ This GitHub Action builds and deploys Flutter applications for iOS, Android, Web
     - Web: Firebase Hosting.
     - macOS: App Store Connect
     - Linux: Snap
-    - windows: Windwos Store
+    - Windows: Windows Store
 
 ## Modular Actions
 
-Each step of the pipeline is available as an independent action that you can use separately in your workflows. This gives you full control over your CI/CD pipeline.
+Each step of the pipeline is available as an independent action. This gives you full control over your CI/CD pipeline.
 
 | Action | Path | Description |
 | --- | --- | --- |
-| **Analyze** | `/analyze` | Run static analysis and formatting checks. |
-| **Test** | `/test` | Run tests with optional coverage reports. |
-| **License** | `/license` | Check license of internal packages. |
-| **Build Runner** | `/build_runner` | Run `build_runner` code generation. |
-| **Gen L10n** | `/gen-l10n` | Run `gen-l10n` localization code generation. |
-| **Build** | `/build/{platform}` | Build for a specific platform. |
-| **Publish** | `/publish/{platform}` | Publish project. |
-| **Publish Firebase** | `/publish_firebase/{platform}` | Publish project on App Distribution. |
-| **Release** | `/release/{platform}` | Build and Publish project. |
-| **Docs** | `/docs` | Generate project documentation with `dartdoc`. |
+| **Check** | [`/check`](./check) | Composite action for analysis, licenses, and tests. |
+| **Analyze** | [`/check/analyze`](./check/analyze) | Run static analysis and formatting checks. |
+| **Test** | [`/check/test`](./check/test) | Run tests with optional coverage reports. |
+| **License** | [`/check/license`](./check/license) | Check compatibility of dependency licenses. |
+| **Prepare** | [`/prepare`](./prepare) | Composite action for environment setup and code generation. |
+| **Build Runner** | [`/prepare/build_runner`](./prepare/build_runner) | Run `build_runner` across the repository. |
+| **Gen L10n** | [`/prepare/gen-l10n`](./prepare/gen-l10n) | Run `gen-l10n` localization across the repository. |
+| **Docs** | [`/docs`](./docs) | Generate project documentation with `dartdoc`. |
+| **Release** | `/release/{platform}` | Build and Publish project (Desktop/Mobile/Web). |
 
 ## Usage
 
-### Full Pipeline
+### Full Pipeline Example
 
-TODO
+```yaml
+jobs:
+  build:
+    runs-on: macos-latest # Required for iOS/macOS
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Flutter Actions Suite
+        uses: Spaccesi/flutter-actions-suite@main
+        with:
+          flutter-version: '3.19.0'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-coverage-report: 'github-pages'
+```
 
 ### Using Individual Actions
 
-TODO
+You can use sub-actions to have more granular control:
 
-### Build for a Specific Platform
+```yaml
+- name: Code Generation
+  uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main
 
-TODO
+- name: Run Tests
+  uses: Spaccesi/flutter-actions-suite/check/test@main
+  with:
+    run-coverage: 'true'
+```
 
-## Action Reference
+## Action Reference - Root Action (`./`)
 
-### Root Action (`./`)
-
-TODO
-
-
-### Analyze (`analyze`)
-
-TODO
-
-### Test (`test`)
-
-TODO
-
-### Build Runner (`build_runner`)
-
-TODO
-
-### Gen L10n (`gen-l10n`)
-
-TODO
-
-### Build (`build/{platform}`)
-
-TODO
-
-### Publish (`build/{platform}`)
-
-TODO
-
-### Docs (`docs`)
-
-TODO
+| Input | Description | Required | Default |
+| --- | --- | --- | --- |
+| `flutter-version` | The Flutter version to use. | **Yes** | - |
+| `flutter-channel` | Flutter channel (`stable`, `beta`, `dev`, `master`). | No | `stable` |
+| `github-token` | Token for GitHub Pages deployment. | No | `''` |
+| `deploy-coverage-report` | Options: `none`, `github-pages`, `artifact`. | No | `none` |
 
 ## Notes
 
-- To build for **macOS/iOS**, you must run on a `macos` runner.
-- To build for **Windows**, you must run on a `windows` runner.
-- To build for **Linux**, use an `ubuntu` runner.
+- **macOS/iOS**: Requires `macos` runner.
+- **Windows**: Requires `windows` runner.
+- **Linux**: Requires `ubuntu` runner.
