@@ -4,14 +4,6 @@ inputs:
   compatible-licenses-conf-path:
     description: 'Path to a file containing a list of compatible licenses.'
     required: true
-  fail-on-warnings:
-    description: 'Whether to fail the action if warnings are found.'
-    required: false
-    default: 'false'
-  fail-on-info:
-    description: 'Whether to fail the action if info messages are found.'
-    required: false
-    default: 'false'
 
 runs:
   using: 'composite'
@@ -24,31 +16,15 @@ runs:
       shell: bash
       run: |
         # Run license check and capture output
-        OUTPUT=$(lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }})
-        EXIT_CODE=$?
+        OUTPUT=$(lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }} -i -a)
         
         # Print output to console
         echo "$OUTPUT"
         
-        HAS_FAILURE=false
-        
-        # Check for warnings if configured to fail
-        if [[ "${{ inputs.fail-on-warnings }}" == "true" ]]; then
-          if echo "$OUTPUT" | grep -qi "warning"; then
-            echo "::error::Failing due to warnings in license check."
-            HAS_FAILURE=true
-          fi
-        fi
-        
-        # Check for info if configured to fail
-        if [[ "${{ inputs.fail-on-info }}" == "true" ]]; then
-          if echo "$OUTPUT" | grep -qi "info"; then
-            echo "::error::Failing due to info messages in license check."
-            HAS_FAILURE=true
-          fi
-        fi
-        
-        # Exit with error if any condition met or if tool itself failed
-        if [ "$HAS_FAILURE" = true ] || [ $EXIT_CODE -ne 0 ]; then
+        # Check if output doesnt contains "No package licenses need approval!"
+        if ! echo "$OUTPUT" | grep -q "No package licenses need approval!"; then
+          echo "::error::Found incompatible licenses."
           exit 1
         fi
+
+        echo "All licenses are compatible."
