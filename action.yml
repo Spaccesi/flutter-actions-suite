@@ -21,6 +21,54 @@ inputs:
     description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact. Available options: none, github-pages, artifact. If set to github-pages, the report will be deployed to GitHub Pages using the provided GitHub token. If set to artifact, the report will be uploaded as an artifact of the workflow run. If set to none, no report will be generated or deployed.'
     required: false
     default: 'none'
+  build-runner:
+    description: 'Whether to run build_runner for code generation. This will run build_runner for all packages in the repository that have a build.yaml file.'
+    required: false
+    default: 'false'
+  gen-l10n:
+    description: 'Whether to run gen-l10n for code generation. This will run gen-l10n for all packages in the repository that have a l10n.yaml or l10n.yml file.'
+    required: false
+    default: 'false'
+  gen-l10n-fails-if-untranslated:
+    description: 'Whether to fail the gen-l10n step if untranslated strings are found. This will check for the presence of an untranslated-messages-file in the l10n configuration file and fail if the file is generated and contains untranslated strings.'
+    required: false
+    default: 'false'
+  analyze-fails-if-infos:
+    description: 'Whether to fail the analyze step if info level issues are found.'
+    required: false
+    default: 'false'
+  analyze-fails-if-warnings:
+    description: 'Whether to fail the analyze step if warning level issues are found.'
+    required: false
+    default: 'false'
+  license:
+    description: 'Whether to check for licenses of dependencies.'
+    required: false
+    default: 'false'
+  compatible-licenses-conf-path:
+    description: 'Path to a YAML file containing a list of compatible licenses. Required if license is set to true. The YAML file should have the following format: compatible_licenses: - MIT - BSD-3-Clause - Apache-2.0'
+    required: false
+    default: ''
+  license-fails-on-warnings:
+    description: 'Whether to fail the license check if any warnings are found.'
+    required: false
+    default: 'false'
+  license-fails-on-info:
+    description: 'Whether to fail the license check if any info level issues are found.'
+    required: false
+    default: 'false'
+  test:
+    description: 'Whether to run tests.'
+    required: false
+    default: 'false'
+  analyze:
+    description: 'Whether to run flutter analyze.'
+    required: false
+    default: 'false'
+  coverage:
+    description: 'Whether to run tests with coverage and generate a coverage report.'
+    required: false
+    default: 'false'
  
 runs:
   using: 'composite'
@@ -35,21 +83,21 @@ runs:
     - name: Prepare Repository
       uses: Spaccesi/flutter-actions-suite/prepare@main
       with:
-        build-runner: 'true'
-        gen-l10n: 'true'
-        gen-l10n-fails-if-untranslated: 'false'
+        build-runner: ${{ inputs.build-runner }}
+        gen-l10n: ${{ inputs.gen-l10n }}
+        gen-l10n-fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}
 
     - name: Run Checks
       uses: Spaccesi/flutter-actions-suite/check@main
       with:
-        analyze: 'true'
-        analyze-fails-if-infos: 'false'
-        analyze-fails-if-warnings: 'false'
-        license: 'false'
-        compatible-licenses-conf-path: ''
-        license-fails-on-warnings: 'false'
-        license-fails-on-info: 'false'
-        test: 'true'
-        run-coverage: 'true'
+        analyze: ${{ inputs.analyze }}
+        analyze-fails-if-infos: ${{ inputs.analyze-fails-if-infos }}
+        analyze-fails-if-warnings: ${{ inputs.analyze-fails-if-warnings }}
+        license: ${{ inputs.license }}
+        compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
+        license-fails-on-warnings: ${{ inputs.license-fails-on-warnings }}
+        license-fails-on-info: ${{ inputs.license-fails-on-info }}
+        test: ${{ inputs.test }}
+        run-coverage: ${{ inputs.coverage }}
         deploy-report: ${{ inputs.deploy-coverage-report }}
         github-token: ${{ inputs.github-token }}
