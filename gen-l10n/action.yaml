@@ -1,10 +1,15 @@
 name: Code Generation with l10n
 description: 'Automatically discovers and runs code generation using l10n for all Flutter packages in the repository.'
+inputs:
+  fails-if-untranslated:
+    description: 'Whether to fail the action if untranslated strings are found.'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
   steps:
-    - name: Run Build Runner
+    - name: Run gen-l10n
       run: |
         # Find all packages in the repository
         PACKAGES=$(find . -mindepth 1 -maxdepth 3 -type f -name "pubspec.yaml" | sed 's|/pubspec.yaml||')
@@ -14,24 +19,73 @@ runs:
           exit 1
         fi
 
+        HAS_ERROR=false
+
         # Run gen-l10n on each package
         for PACKAGE_DIR in $PACKAGES; do
           echo "::group::Running gen-l10n in $PACKAGE_DIR"
+          
+          # Navigate to package directory
+          pushd "$PACKAGE_DIR" > /dev/null
 
-          # Check if the package has l10n dependency
-          if grep -q "l10n:" "$PACKAGE_DIR/pubspec.yaml"; then
-            cd "$PACKAGE_DIR"
-            echo "Running: flutter gen-l10n"
-            flutter gen-l10n
-            cd - > /dev/null
-            echo "✓ Completed gen-l10n for $PACKAGE_DIR"
+          # Check for l10n configuration file
+          if [ -f "l10n.yaml" ]; then
+            CONFIG_FILE="l10n.yaml"
+          elif [ -f "l10n.yml" ]; then
+            CONFIG_FILE="l10n.yml"
           else
-            echo "⊘ Skipping $PACKAGE_DIR (no l10n dependency)"
+            CONFIG_FILE=""
           fi
 
+          if [ -n "$CONFIG_FILE" ]; then
+            echo "Found $CONFIG_FILE"
+
+            # Check if untranslated-messages-file is defined
+            if [[ "${{ inputs.fails-if-untranslated }}" == "true" ]]; then
+              if ! grep -q "^untranslated-messages-file:" "$CONFIG_FILE"; then
+                echo "untranslated-messages-file path not found, adding to $CONFIG_FILE"
+                # Add a newline just in case the file doesn't end with one
+                echo "" >> "$CONFIG_FILE"
+                echo "untranslated-messages-file: untranslated_messages.txt" >> "$CONFIG_FILE"
+              fi
+            fi
+
+            # Run generation
+            echo "Running flutter gen-l10n"
+            flutter gen-l10n
+
+            # Check generated files ONLY if configured to check
+            if [[ "${{ inputs.fails-if-untranslated }}" == "true" ]]; then
+              # Find the configured output file for untranslated messages
+              # We assume simple key: value syntax here
+              UNTRANSLATED_FILE=$(grep "^untranslated-messages-file:" "$CONFIG_FILE" | cut -d':' -f2 | tr -d ' "' | xargs)
+
+              if [ -n "$UNTRANSLATED_FILE" ]; then
+                if [ -f "$UNTRANSLATED_FILE" ]; then
+                   if [ -s "$UNTRANSLATED_FILE" ]; then
+                     echo "::warning::Untranslated messages found in $PACKAGE_DIR/$UNTRANSLATED_FILE"
+                     cat "$UNTRANSLATED_FILE"
+                     
+                     HAS_ERROR=true
+                     echo "::error::Marking as failed due to untranslated messages"
+                   else
+                     echo "Untranslated messages file is empty. Good job!"
+                   fi
+                else
+                   echo "No untranslated messages file generated."
+                fi
+              fi
+            fi
+          else
+            echo "No l10n.yaml or l10n.yml found. Skipping."
+          fi
+
+          popd > /dev/null
           echo "::endgroup::"
         done
 
-        echo "gen-l10n completed for all packages"
+        if [ "$HAS_ERROR" = true ]; then
+          exit 1
+        fi
       shell: bash
   
