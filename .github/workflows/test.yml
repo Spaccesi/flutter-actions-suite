@@ -16,7 +16,7 @@ name: Test Actions
 
 on:
   push:
-    branches: [main]
+    branches: [none]
   pull_request:
 
 jobs:

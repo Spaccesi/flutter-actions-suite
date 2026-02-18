@@ -29,13 +29,10 @@ inputs:
     description: 'Run tests with coverage. Even if false, coverage will be generated if deploy-report is set to github-pages or artifact.'
     required: false
     default: 'false'
-  deploy-report:
-    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact. If set to github-pages, the report will be deployed to GitHub Pages using the provided GitHub token. If set to artifact, the report will be uploaded as an artifact of the workflow run. If set to none, no report will be generated or deployed.'
+  create-coverage-badge:
+    description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
-    default: 'none'
-  github-token:
-    description: 'GitHub token with permissions to deploy to GitHub Pages. Required if deploy-report is set to github-pages.'
-    required: false
+    default: 'false'
     
 runs:
   using: 'composite'
@@ -69,27 +66,13 @@ runs:
 
     - name: Install genhtml
       shell: bash
-      if: inputs.deploy-report != 'none'
+      if: inputs.create-coverage-badge == 'true'
       run: |
         sudo apt-get update
         sudo apt-get install lcov
 
     - name: Generate Coverage report
       shell: bash
-      if: inputs.deploy-report != 'none'
+      if: inputs.create-coverage-badge == 'true'
       run: |
         genhtml coverage/lcov.info -o coverage/html
-
-    - name: Deploy Report to GitHub Pages
-      if: inputs.deploy-report == 'github-pages' 
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ inputs.github-token }}
-        publish_dir: ./coverage/html
-    
-    - name: Upload Coverage Report as Artifact
-      if: inputs.deploy-report == 'artifact' 
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: ./coverage/html
