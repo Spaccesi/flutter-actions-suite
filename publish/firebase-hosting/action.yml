@@ -1,0 +1,40 @@
+name: Publish to Firebase Hosting
+description: Publish the built web app to Firebase Hosting
+inputs:
+  firebase-service-account-base64:
+    description: "Base64 encoded Firebase service account key (JSON file)"
+    required: true
+  project-id:
+    description: "Firebase project ID to publish to"
+    required: true
+  target:
+    description: "Firebase Hosting target to deploy to (optional, defaults to 'default')"
+    required: false
+  public-dir:
+    description: "Directory containing the built web app to publish (optional, defaults to 'build/web')"
+    required: false
+  debug:
+    description: "Whether to enable debug logging for the deployment process (default: false)"
+    required: false
+    default: "false"
+  message:
+    description: "A message to include with the deployment (optional)"
+    required: false
+runs:  
+  using: "composite"
+  steps:
+    - name: Download Firebase service account key
+      id: firebase_service_account
+      uses: timheuer/base64-to-file@v1
+      with:
+        fileName: firebase-service-account.json
+        encodedString: ${{ inputs.firebase-service-account-base64 }}
+    - name: Publish to Firebase Hosting
+      shell: bash
+      run: |
+        firebase deploy \
+          --only hosting:${{ inputs.target || 'default' }} \
+          --project ${{ inputs.project-id }} \
+          --public ${{ inputs.public-dir || 'build/web' }} \
+          ${ inputs.debug == "true" && "--debug" }
+          ${ inputs.message && "--message " + inputs.message }

@@ -1,0 +1,43 @@
+name: Publish windows
+description: Publish windows app to the Microsoft Store
+inputs:
+  partner-center-tenant-id:
+    description: 'Tenant ID for Microsoft Partner Center. Required to publish to the Microsoft Store.'
+    required: true
+    default: ''
+  partner-center-seller-id:
+    description: 'Seller ID for Microsoft Partner Center. Required to publish to the Microsoft Store.'
+    required: true
+    default: ''
+  partner-center-client-id:
+    description: 'Client ID for Microsoft Partner Center. Required to publish to the Microsoft Store.'
+    required: true
+    default: ''
+  partner-center-client-secret:
+    description: 'Client Secret for Microsoft Partner Center. Required to publish to the Microsoft Store.'
+    required: true
+    default: ''
+  ms-store-app-id:
+    description: 'App ID for the Microsoft Store app. Required to publish to the Microsoft Store.'
+    required: true
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - uses: microsoft/setup-msstore-cli@v1.3
+
+    - name: Configure MS Store CLI
+      shell: bash
+      run: msstore reconfigure --tenantId ${{ inputs.partner-center-tenant-id }} --sellerId ${{ inputs.partner-center-seller-id }} --clientId ${{ inputs.partner-center-client-id }} --clientSecret ${{ inputs.partner-center-client-secret }}
+
+    - name: Install Dart dependencies
+      shell: bash
+      run: flutter pub get
+      
+    - name: Create MSIX package
+      shell: bash
+      run: msstore package .
+
+    - name: Publish MSIX to the Microsoft Store
+      shell: bash
+      run: msstore publish --appId ${{ inputs.ms-store-app-id }} -v
