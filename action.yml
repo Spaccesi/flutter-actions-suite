@@ -69,6 +69,14 @@ inputs:
     description: 'Whether to run tests with coverage and generate a coverage report.'
     required: false
     default: 'false'
+  build-platform:
+    description: 'A comma separated list of platforms to build and deploy. Available options: android, ios, web, windows, macos, linux. If not set, all platforms will be built and deployed.'
+    required: false
+    default: ''
+  publish-destination:
+    description: 'Where to publish the built app. Available options: none, github-releases, store, . If set to github-releases, the app will be published to GitHub Releases using the provided GitHub token. If set to artifact, the app will be uploaded as an artifact of the workflow run. If set to none, the app will not be published.'
+    required: false
+    default: 'none'
  
 runs:
   using: 'composite'
@@ -101,3 +109,66 @@ runs:
         run-coverage: ${{ inputs.coverage }}
         deploy-report: ${{ inputs.deploy-coverage-report }}
         github-token: ${{ inputs.github-token }}
+
+    - name: Build android
+      if: contains(inputs.build-platform, 'android')
+      uses: Spaccesi/flutter-actions-suite/build/ios@main
+    
+    - name: Build iOS
+      if: contains(inputs.build-platform, 'ios')
+      uses: Spaccesi/flutter-actions-suite/build/ios@main
+
+    - name: Build web
+      if: contains(inputs.build-platform, 'web')
+      uses: Spaccesi/flutter-actions-suite/build/web@main 
+
+    - name: Build windows
+      if: contains(inputs.build-platform, 'windows')
+      uses: Spaccesi/flutter-actions-suite/build/windows@main 
+
+    - name: Build macos
+      if: contains(inputs.build-platform, 'macos')
+      uses: Spaccesi/flutter-actions-suite/build/macos@main 
+
+    - name: Build linux
+      if: contains(inputs.build-platform, 'linux')
+      uses: Spaccesi/flutter-actions-suite/build/linux@main 
+
+    - name: Publish to GitHub Releases
+      if: inputs.publish-destination == 'github-releases'
+      uses: Spaccesi/flutter-actions-suite/publish/github-releases@main
+
+    - name: Publish to Firebase App Distribution
+      if: inputs.publish-destination == 'app-distribution'
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+
+    - name: Publish to Firebase Hosting
+      if: inputs.publish-destination == 'hosting'
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main  
+
+    - name: Upload as Artifact
+      if: inputs.publish-destination == 'artifact'
+      uses: actions/upload-artifact@v3
+     
+    - name: Deploy to Play Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
+      uses: Spaccesi/flutter-actions-suite/publish/play-store@main
+
+    - name: Deploy to ios App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
+      uses: Spaccesi/flutter-actions-suite/publish/app-store@main
+
+    - name: Deploy to Microsoft Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
+      uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
+
+    - name: Deploy to Mac App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
+      uses: Spaccesi/flutter-actions-suite/publish/mac-app-store@main 
+
+    - name: Deploy to Linux App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
+      uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
+    
+
+
