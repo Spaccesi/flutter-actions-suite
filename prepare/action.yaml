@@ -1,11 +1,11 @@
 name: Prepare Flutter Repository
 description: 'Prepares the Flutter repository by running code generation and localization tasks.'
 inputs:
-  build-runner:
+  run-build-runner:
     description: 'Whether to run build_runner for code generation. Automatically discovers and runs build_runner for all Flutter packages in the repository.'
     required: false
     default: 'true'
-  gen-l10n:
+  run-gen-l10n:
     description: 'Whether to run gen-l10n for localization code generation. Automatically discovers and runs gen-l10n for all Flutter packages in the repository.'
     required: false
     default: 'true'
@@ -22,11 +22,11 @@ runs:
       shell: bash
       
     - name: Run Build Runner
-      if: ${{ inputs.build-runner == 'true' }}
+      if: ${{ inputs.run-build-runner == 'true' }}
       uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main
 
     - name: Run gen-l10n
-      if: ${{ inputs.gen-l10n == 'true' }}
+      if: ${{ inputs.run-gen-l10n == 'true' }}
       uses: Spaccesi/flutter-actions-suite/prepare/gen-l10n@main
       with:
         fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}

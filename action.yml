@@ -6,6 +6,7 @@ branding:
   color: 'blue'
 
 inputs:
+  # Flutter configuration inputs
   flutter-version:
     description: 'The Flutter version to use.'
     required: true
@@ -13,24 +14,36 @@ inputs:
     description: 'The Flutter channel to use (stable, beta, dev, master).'
     required: false
     default: 'stable'
-  github-token:
-    description: 'GitHub token with permissions to deploy to GitHub Pages. Required if publish-coverage-report is set to true.'
-    required: false
-    default: ''
-  deploy-coverage-report:
-    description: 'Generate and deploy a HTML report optionally to GitHub Pages or as an artifact. Available options: none, github-pages, artifact. If set to github-pages, the report will be deployed to GitHub Pages using the provided GitHub token. If set to artifact, the report will be uploaded as an artifact of the workflow run. If set to none, no report will be generated or deployed.'
-    required: false
-    default: 'none'
-  build-runner:
+
+  # Prepare step inputs
+  run-build-runner:
     description: 'Whether to run build_runner for code generation. This will run build_runner for all packages in the repository that have a build.yaml file.'
     required: false
     default: 'false'
-  gen-l10n:
+  run-gen-l10n:
     description: 'Whether to run gen-l10n for code generation. This will run gen-l10n for all packages in the repository that have a l10n.yaml or l10n.yml file.'
     required: false
     default: 'false'
   gen-l10n-fails-if-untranslated:
     description: 'Whether to fail the gen-l10n step if untranslated strings are found. This will check for the presence of an untranslated-messages-file in the l10n configuration file and fail if the file is generated and contains untranslated strings.'
+    required: false
+    default: 'false'
+
+  # Check step inputs
+  run-test:
+    description: 'Whether to run tests.'
+    required: false
+    default: 'false'
+  run-analyze:
+    description: 'Whether to run flutter analyze.'
+    required: false
+    default: 'false'
+  run-license:
+    description: 'Whether to check for licenses of dependencies.'
+    required: false
+    default: 'false'
+  run-coverage:
+    description: 'Whether to run tests with coverage and generate a coverage report.'
     required: false
     default: 'false'
   analyze-fails-if-infos:
@@ -41,42 +54,86 @@ inputs:
     description: 'Whether to fail the analyze step if warning level issues are found.'
     required: false
     default: 'false'
-  license:
-    description: 'Whether to check for licenses of dependencies.'
-    required: false
-    default: 'false'
   compatible-licenses-conf-path:
     description: 'Path to a YAML file containing a list of compatible licenses. Required if license is set to true. The YAML file should have the following format: compatible_licenses: - MIT - BSD-3-Clause - Apache-2.0'
     required: false
     default: ''
-  license-fails-on-warnings:
-    description: 'Whether to fail the license check if any warnings are found.'
+  test-create-coverage-badge:
+    description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
     default: 'false'
-  license-fails-on-info:
-    description: 'Whether to fail the license check if any info level issues are found.'
-    required: false
-    default: 'false'
-  test:
-    description: 'Whether to run tests.'
-    required: false
-    default: 'false'
-  analyze:
-    description: 'Whether to run flutter analyze.'
-    required: false
-    default: 'false'
-  coverage:
-    description: 'Whether to run tests with coverage and generate a coverage report.'
-    required: false
-    default: 'false'
+  
+  # General Build step inputs
   build-platform:
-    description: 'A comma separated list of platforms to build and deploy. Available options: android, ios, web, windows, macos, linux. If not set, all platforms will be built and deployed.'
+    description: 'A comma separated list of platforms to build and deploy. Available options: android, ios, web, windows, macos, linux, none. If not set, all platforms will be built and deployed.'
     required: false
-    default: ''
+    default: 'none'
   publish-destination:
     description: 'Where to publish the built app. Available options: none, github-releases, store, . If set to github-releases, the app will be published to GitHub Releases using the provided GitHub token. If set to artifact, the app will be uploaded as an artifact of the workflow run. If set to none, the app will not be published.'
     required: false
     default: 'none'
+  build-mode:
+    description: 'The build mode to use. Available options: debug, profile, release.'
+    required: false
+    default: 'release'
+  build-name:
+    description: 'The build name to use for the app. This is typically used as the version name shown to users. If not set, the version from pubspec.yaml will be used.'  
+    required: false
+  build-number:
+    description: 'The build number to use for the app. This is typically used as the internal version number. If not set, the version from pubspec.yaml will be used.'
+    required: false
+  flavor:
+    description: 'The Flutter flavor to build. If not set, the default flavor will be built.'
+    required: false
+  dart-define:
+    description: 'Additional Dart define variables to pass to the Flutter build command. This should be a comma separated list of key=value pairs.'
+    required: false
+  
+
+
+  # iOS Build & Publish step inputs
+  ios-signing-certificate-base64:
+    description: 'Base64 encoded P12 file containing the iOS signing certificate and private key. Required for building and signing iOS apps.'
+    required: false
+  
+
+  # macOS Build & Publish step inputs
+  macos-signing-certificate-base64:
+    description: 'Base64 encoded P12 file containing the macOS signing certificate and private key. Required for building and signing macOS apps.'
+    required: false
+
+  # Snap Build & Publish step inputs
+  snap-store-token:
+    description: 'API token for authenticating with the Snap Store. Required for publishing to the Snap Store.'
+    required: false
+
+  # Web Build & Publish step inputs
+  firebase-service-account-base64:
+    description: 'Base64 encoded Firebase service account key (JSON file). Required for publishing to Firebase Hosting.'
+    required: false
+  firebase-project-id:
+    description: 'Firebase project ID to publish to. Required for publishing to Firebase Hosting.'
+    required: false
+
+  # Android Build & Publish step inputs
+  android-keystore-base64:
+    description: 'Base64 encoded JKS or PKCS12 file containing the Android signing keystore. Required for building and signing Android apps.'
+    required: false
+  android-keystore-alias:
+    description: 'Alias of the key to use from the Android signing keystore. Required for building and signing Android apps.'
+    required: false
+  android-keystore-password:
+    description: 'Password for the Android signing keystore. Required for building and signing Android apps.'
+    required: false
+  android-key-password:
+    description: 'Password for the key to use from the Android signing keystore. Required for building and signing Android apps.'
+    required: false
+  android-build-type:
+    description: 'The build mode to use when building the Android app. Available options: apk, appbundle. Default is appbundle.'
+    required: false
+    default: 'appbundle'
+  
+
  
 runs:
   using: 'composite'
@@ -91,86 +148,140 @@ runs:
     - name: Prepare Repository
       uses: Spaccesi/flutter-actions-suite/prepare@main
       with:
-        build-runner: ${{ inputs.build-runner }}
-        gen-l10n: ${{ inputs.gen-l10n }}
+        run-build-runner: ${{ inputs.run-build-runner }}
+        run-gen-l10n: ${{ inputs.run-gen-l10n }}
         gen-l10n-fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}
 
     - name: Run Checks
       uses: Spaccesi/flutter-actions-suite/check@main
       with:
-        analyze: ${{ inputs.analyze }}
+        run-analyze: ${{ inputs.run-analyze }}
         analyze-fails-if-infos: ${{ inputs.analyze-fails-if-infos }}
         analyze-fails-if-warnings: ${{ inputs.analyze-fails-if-warnings }}
-        license: 'false'
+        run-license: ${{ inputs.run-license }}
         compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
-        license-fails-on-warnings: ${{ inputs.license-fails-on-warnings }}
-        license-fails-on-info: ${{ inputs.license-fails-on-info }}
-        test: ${{ inputs.test }}
-        run-coverage: ${{ inputs.coverage }}
-        deploy-report: ${{ inputs.deploy-coverage-report }}
-        github-token: ${{ inputs.github-token }}
+        run-test: ${{ inputs.run-test }}
+        run-coverage: ${{ inputs.run-coverage }}
+        create-coverage-badge: ${{ inputs.test-create-coverage-badge }}
 
     - name: Build android
       if: contains(inputs.build-platform, 'android')
-      uses: Spaccesi/flutter-actions-suite/build/ios@main
-    
-    - name: Build iOS
-      if: contains(inputs.build-platform, 'ios')
-      uses: Spaccesi/flutter-actions-suite/build/ios@main
+      uses: Spaccesi/flutter-actions-suite/build/android@main
       with:
-        ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_KEY_BASE64 }}
+        android-keystore-base64: ${{ inputs.android-keystore-base64 }}
+        android-keystore-alias: ${{ inputs.android-keystore-alias }}
+        android-keystore-password: ${{ inputs.android-keystore-password }}
+        android-key-password: ${{ inputs.android-key-password }}
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: ${{ inputs.no-pub }}
+        target: ${{ inputs.target }}
+        obfuscate: ${{ inputs.obfuscate }}
+        build-type: ${{ inputs.android-build-type }}
+
+    
+    # - name: Build iOS
+    #   if: contains(inputs.build-platform, 'ios')
+    #   uses: Spaccesi/flutter-actions-suite/build/ios@main
+    #   with:
+    #     ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_KEY_BASE64 }}
+    #     build-mode: ${{ inputs.build-mode }}
+    #     build-name: ${{ inputs.build-name }}
+    #     build-number: ${{ inputs.build-number }}
+    #     flavor: ${{ inputs.flavor }}
+    #     dart-define: ${{ inputs.dart-define }}
+    #     no-pub: 'true'
+    #     target: ${{ inputs.target }}
+    #     code-sign: ${{ inputs.code-sign }}
+    #     obfuscate: ${{ inputs.obfuscate }}
 
     - name: Build web
       if: contains(inputs.build-platform, 'web')
       uses: Spaccesi/flutter-actions-suite/build/web@main 
+      with:
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: 'true'
+        target: ${{ inputs.target }}
+        obfuscate: ${{ inputs.obfuscate }}
+        wasm: ${{ inputs.wasm }}
+        pwa-strategy: ${{ inputs.pwa-strategy }}
+        asset-base-url: ${{ inputs.asset-base-url }}
+        href-base: ${{ inputs.href-base }}
 
     - name: Build windows
       if: contains(inputs.build-platform, 'windows')
-      uses: Spaccesi/flutter-actions-suite/build/windows@main 
+      uses: Spaccesi/flutter-actions-suite/build/windows@main
+      with:
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: 'true'
+        target: ${{ inputs.target }}
+        obfuscate: ${{ inputs.obfuscate }}
 
-    - name: Build macos
-      if: contains(inputs.build-platform, 'macos')
-      uses: Spaccesi/flutter-actions-suite/build/macos@main 
+    # - name: Build macos
+    #   if: contains(inputs.build-platform, 'macos')
+    #   uses: Spaccesi/flutter-actions-suite/build/macos@main 
+    #   with:
+    #     macos-signing-certificate-base64: ${{ secrets.MACOS_SIGNING_KEY_BASE64 }}
 
     - name: Build linux
       if: contains(inputs.build-platform, 'linux')
       uses: Spaccesi/flutter-actions-suite/build/linux@main 
+      with:
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: 'true'
+        target: ${{ inputs.target }}
+        obfuscate: ${{ inputs.obfuscate }}
 
-    - name: Publish to GitHub Releases
-      if: inputs.publish-destination == 'github-releases'
-      uses: Spaccesi/flutter-actions-suite/publish/github-releases@main
+    # - name: Publish to GitHub Releases
+    #   if: inputs.publish-destination == 'github-releases'
+    #   uses: Spaccesi/flutter-actions-suite/publish/github-releases@main
 
-    - name: Publish to Firebase App Distribution
-      if: inputs.publish-destination == 'app-distribution'
-      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+    # - name: Publish to Firebase App Distribution
+    #   if: inputs.publish-destination == 'app-distribution'
+    #   uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
 
-    - name: Publish to Firebase Hosting
-      if: inputs.publish-destination == 'hosting'
-      uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main  
+    # - name: Publish to Firebase Hosting
+    #   if: inputs.publish-destination == 'hosting'
+    #   uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main  
 
-    - name: Upload as Artifact
-      if: inputs.publish-destination == 'artifact'
-      uses: actions/upload-artifact@v3
+    # - name: Upload as Artifact
+    #   if: inputs.publish-destination == 'artifact'
+    #   uses: actions/upload-artifact@v3
      
-    - name: Deploy to Play Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
-      uses: Spaccesi/flutter-actions-suite/publish/play-store@main
+    # - name: Deploy to Play Store
+    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
+    #   uses: Spaccesi/flutter-actions-suite/publish/play-store@main
 
-    - name: Deploy to ios App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
-      uses: Spaccesi/flutter-actions-suite/publish/app-store@main
+    # - name: Deploy to ios App Store
+    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
+    #   uses: Spaccesi/flutter-actions-suite/publish/app-store@main
 
-    - name: Deploy to Microsoft Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
-      uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
+    # - name: Deploy to Microsoft Store
+    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
+    #   uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
 
-    - name: Deploy to Mac App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
-      uses: Spaccesi/flutter-actions-suite/publish/mac-app-store@main 
+    # - name: Deploy to Mac App Store
+    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
+    #   uses: Spaccesi/flutter-actions-suite/publish/mac-app-store@main 
 
-    - name: Deploy to Linux App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
-      uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
+    # - name: Deploy to Linux App Store
+    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
+    #   uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
     
 
 
