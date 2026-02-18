@@ -18,12 +18,10 @@ runs:
         # Run license check and capture output
         OUTPUT=$(lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }} -i -a)
         
-        # Print output to console
-        echo "$OUTPUT"
-        
         # Check if output doesnt contains "No package licenses need approval!"
         if ! echo "$OUTPUT" | grep -q "No package licenses need approval!"; then
           echo "::error::Found incompatible licenses."
+          echo "$OUTPUT"
           exit 1
         fi
 
