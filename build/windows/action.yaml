@@ -1,0 +1,74 @@
+name: Build windows app
+description: Build the windows app using Flutter
+inputs:
+  build-mode:
+    description: 'The build mode to use when building the app. Available options: debug, profile, release. Default is release.'
+    required: false
+    default: 'release'
+  build-number:
+    description: 'An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as "versionCode". On Xcode builds it is used as "CFBundleVersion". On Windows it is used as the build suffix for the product and file versions.'
+    required: false
+  build-name:
+    description: 'A "x.y.z" string used as the version number shown to users. For each new version of your app, you will provide a version number to differentiate it from previous versions. On Android it is used as "versionName". On Xcode builds it is used as "CFBundleShortVersionString". On Windows it is used as the major, minor, and patch parts of the product and file versions.'
+    required: false
+  no-pub:
+    description: 'Whether to skip running "flutter pub get" before building the app.'
+    required: false
+    default: 'false'
+  no-obfuscate:
+    description: 'Whether to skip obfuscating the Dart code in a release build. This flag must always be combined with "--split-debug-info" option, the mapping between the values and the original identifiers is stored in the symbol map created in the specified directory. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
+    required: false
+    default: 'false'
+  split-debug-info:
+    description: 'Whether to split the debug info into a separate file in a release build. This flag reduces application size by storing Dart program symbols in a separate file on the host rather than in the application. The value of the flag should be a directory where program symbol files can be stored for later use. These symbol files contain the information needed to symbolize Dart stack traces. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
+    required: false
+  no-tree-shake-icons:
+    description: 'Whether to tree shake icon fonts so that only glyphs used by the application remain. This flag is enabled by default.'
+    required: false
+    default: 'false'
+  no-analyze-size:
+    description: 'Whether to produce additional profile information for artifact output size. This flag is only supported on "--release" builds. When building for Android, a single ABI must be specified at a time with the "--target-platform" flag. When building for iOS, only the symbols from the arm64 architecture are used to analyze code size. By default, the intermediate output files will be placed in a transient directory in the build directory. This can be overridden with the "--code-size-directory" option. This flag cannot be combined with "--split-debug-info".'
+    required: false
+    default: 'false'
+  dart-define:
+    description: 'Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors. Multiple defines can be passed by repeating "--dart-define" multiple times.'
+    required: false
+  dart-define-from-file:
+    description: 'The path of a .json or .env file containing key-value pairs that will be available as environment variables. These can be accessed using the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors. Multiple defines can be passed by repeating "--dart-define-from-file" multiple times. Entries from "--dart-define" with identical keys take precedence over entries from these files.'
+    required: false
+  target:
+    description: 'The main entry-point file of the application, as run on the device. If the "--target" option is omitted, but a file name is provided on the command line, then that is used instead. (defaults to "lib/main.dart")'
+    required: false
+  track-widget-creation:
+    description: 'Whether to track widget creation locations. This enables features such as the widget inspector. This parameter is only functional in debug mode (i.e. when compiling JIT, not AOT). (defaults to on)'
+    required: false
+    default: 'true'
+  config-only:
+    description: 'Whether to update the project configuration without performing a build.'
+    required: false
+    default: 'false'
+  code-size-directory:
+    description: 'The location to write code size analysis files. If this is not specified, files are written to a temporary directory under the build directory.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build windows app
+      shell: bash
+      run: |
+        flutter build windows \
+          --${{ inputs.build-mode }} \
+          ${ inputs.build-number && "--build-number " + inputs.build-number } \
+          ${ inputs.build-name && "--build-name " + inputs.build-name } \
+          ${ inputs.no-pub == "true" && "--no-pub" } \
+          ${ inputs.no-obfuscate == "true" && "--no-obfuscate" } \
+          ${ inputs.split-debug-info && "--split-debug-info " + inputs.split-debug-info } \
+          ${ inputs.no-tree-shake-icons == "true" && "--no-tree-shake-icons" } \
+          ${ inputs.no-analyze-size == "true" && "--no-analyze-size" } \
+          ${ inputs.dart-define && "--dart-define " + inputs.dart-define } \
+          ${ inputs.dart-define-from-file && "--dart-define-from-file " + inputs.dart-define-from-file } \
+          ${ inputs.target && "--target " + inputs.target } \
+          ${ inputs.track-widget-creation == "true" && "--track-widget-creation" } \
+          ${ inputs.config-only == "true" && "--config-only" } \
+          ${ inputs.code-size-directory && "--code-size-directory " + inputs.code-size-directory }

@@ -1,0 +1,61 @@
+name: Build web app
+description: Build the web app using Flutter
+inputs:
+  dart-define:
+    description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
+    required: false
+    default: ''
+  build-number:
+    description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
+    required: false
+    default: ''
+  target:
+    description: "The main entry-point file of the application (default: lib/main.dart)"
+    required: false
+    default: ''
+  build-name:
+    description: "A 'x.y.z' string used as the version number shown to users."
+    required: false
+    default: ''
+  output:
+    description: "The absolute path to the directory where the web build output will be placed. By default, this is <current-directory>/build/web."
+    required: false
+    default: ''
+  no-pub:
+    description: "Whether to skip running 'flutter pub get' before the build (default: false)"
+    required: false
+    default: 'false'
+  base-href:
+    description: "Overrides the href attribute of the <base> tag in web/index.html. No change is done to web/index.html file if this flag is not provided. The value has to start and end with a slash '/'. For more information: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base"
+    required: false
+    default: ''
+  static-assets-url:
+    description: "Used when serving the static assets from a different domain the application is hosted on. The value has to end with a slash '/'. When this is set, it will replace all $FLUTTER_STATIC_ASSETS_URL in web/index.html for the given value."
+    required: false
+    default: ''
+  pwa-strategy:
+    description: "The caching strategy to be used by the PWA service worker (default: offline-first, options: offline-first, none)"
+    required: false
+    default: "offline-first"
+  wasm:
+    description: "Whether to build the web app with WebAssembly (default: false). See https://flutter.dev/to/wasm for more information."
+    required: false
+    default: "false"
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Build web app
+      shell: bash
+      run: |
+        flutter build web \
+          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
+          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
+          ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
+          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
+          ${{ inputs.base-href != '' && format('--base-href={0}', inputs.base-href) || '' }} \
+          ${{ inputs.static-assets-url != '' && format('--static-assets-url={0}', inputs.static-assets-url) || '' }} \
+          --pwa-strategy=${{ inputs.pwa-strategy }} \
+          ${{ inputs.wasm == 'true' && '--wasm' || '' }} \
+          --output=${{ inputs.output || 'build/web' }}

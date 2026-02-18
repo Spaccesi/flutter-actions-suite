@@ -1,0 +1,72 @@
+name: Build android
+description: Build android app
+inputs:
+  android-keystore-base64:
+    description: "Base64 encoded Android keystore file"
+    required: true
+  android-store-password:
+    description: "Password for the Android keystore"
+    required: true
+  android-key-password:
+    description: "Password for the key in the Android keystore"
+    required: true
+  android-key-alias:
+    description: "Alias for the key in the Android keystore"
+    required: true
+  android-local-properties-file:
+    description: "Content of the local.properties file for Android build"
+    required: true
+  java-version:
+    description: "Version of Java to use for the Android build (default: 17)"
+    required: false
+    default: "17"
+  java-distribution:
+    description: "Java distribution to use for the Android build (default: zulu)"
+    required: false
+    default: "zulu"
+  flavor:
+    description: "Flutter flavor to build (optional)"
+    required: false
+  dart-define:
+    description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
+    required: false
+runs:  
+  using: "composite"
+  steps:
+    - name: Download Android keystore
+      id: android_keystore
+      uses: timheuer/base64-to-file@v1
+      with:
+        fileName: upload-keystore.jks
+        encodedString: ${{ inputs.android-keystore-base64 }}
+        
+    - name: Create key.properties file
+      shell: bash
+      run: |
+        echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
+        echo "storePassword=${{ inputs.android-store-password }}" >> android/key.properties
+        echo "keyPassword=${{ inputs.android-key-password }}" >> android/key.properties
+        echo "keyAlias=${{ inputs.android-key-alias }}" >> android/key.properties
+
+    - name: Create local.properties file
+      shell: bash
+      run: |
+        echo '${{ inputs.android-local-properties-file }}' > android/local.properties
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: '${{ inputs.java-distribution }}'
+        java-version: '${{ inputs.java-version }}'
+
+    - name: Start Android Release Build
+      shell: bash
+      run: |
+        flavor_arg=""
+        if [[ "${{ inputs.flavor }}" != "" ]]; then
+          flavor_arg="--flavor ${{ inputs.flavor }}"
+        fi
+        dart_define_args=""
+        if [[ "${{ inputs.dart-define }}" != "" ]]; then
+          dart_define_args="--dart-define=${{ inputs.dart-define }}"
+        fi
+        flutter build appbundle --release ${flavor_arg} ${dart_define_args}
