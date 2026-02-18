@@ -23,6 +23,10 @@ inputs:
 runs:  
   using: "composite"
   steps:
+    - name: Install Firebase CLI
+      shell: bash
+      run: |
+        curl -sL https://firebase.tools | bash
     - name: Download Firebase service account key
       id: firebase_service_account
       uses: timheuer/base64-to-file@v1

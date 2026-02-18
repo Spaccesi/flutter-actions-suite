@@ -30,6 +30,14 @@ inputs:
   dart-define:
     description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
     required: false
+  build-type:
+    description: "Type of build to perform (default: appbundle, options: apk, appbundle)"
+    required: false
+    default: "appbundle"
+  build-mode:
+    description: "Build mode for the Android app (debug, profile, release)"
+    required: false
+    default: "release"
 runs:  
   using: "composite"
   steps:
@@ -61,12 +69,12 @@ runs:
     - name: Start Android Release Build
       shell: bash
       run: |
-        flavor_arg=""
-        if [[ "${{ inputs.flavor }}" != "" ]]; then
-          flavor_arg="--flavor ${{ inputs.flavor }}"
-        fi
-        dart_define_args=""
-        if [[ "${{ inputs.dart-define }}" != "" ]]; then
-          dart_define_args="--dart-define=${{ inputs.dart-define }}"
-        fi
-        flutter build appbundle --release ${flavor_arg} ${dart_define_args}
+        flutter build --${{ inputs.build-type }} \
+          --${{ inputs.build-mode }} \
+          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
+          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
+          ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
+          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
+          ${{ inputs.flavor && format('--flavor={0}', inputs.flavor) || '' }} \
+          

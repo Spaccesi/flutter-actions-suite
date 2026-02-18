@@ -9,6 +9,10 @@ inputs:
     description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
     required: false
     default: ''
+  build-mode:
+    description: "The build mode to use when building the app. Available options: debug, profile, release. Default is release."
+    required: false
+    default: 'release'
   target:
     description: "The main entry-point file of the application (default: lib/main.dart)"
     required: false
@@ -49,6 +53,7 @@ runs:
       shell: bash
       run: |
         flutter build web \
+          --${{ inputs.build-mode }} \
           ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
           ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
           ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \

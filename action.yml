@@ -101,7 +101,7 @@ runs:
         analyze: ${{ inputs.analyze }}
         analyze-fails-if-infos: ${{ inputs.analyze-fails-if-infos }}
         analyze-fails-if-warnings: ${{ inputs.analyze-fails-if-warnings }}
-        license: ${{ inputs.license }}
+        license: 'false'
         compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
         license-fails-on-warnings: ${{ inputs.license-fails-on-warnings }}
         license-fails-on-info: ${{ inputs.license-fails-on-info }}
@@ -117,6 +117,8 @@ runs:
     - name: Build iOS
       if: contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/build/ios@main
+      with:
+        ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_KEY_BASE64 }}
 
     - name: Build web
       if: contains(inputs.build-platform, 'web')
