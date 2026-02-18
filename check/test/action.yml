@@ -41,28 +41,32 @@ runs:
       shell: bash
       if: inputs.run-coverage == 'false' && inputs.deploy-report == 'none'
       run: |
-        flutter test . --concurrency=${{ inputs.concurrency }} \
+        flutter test . \
+          -r github \
+          --no-pub \
+          --concurrency=${{ inputs.concurrency }} \
           ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
           ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
           ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-          -r github
-          --no-pub
+          
 
     - name: Run Tests & Coverage
       if: inputs.run-coverage == 'true' || inputs.deploy-report != 'none'
       shell: bash
       run: |
-        flutter test . --concurrency=${{ inputs.concurrency }} \
+        flutter test . \
+          -r github \
+          --no-pub \
+          --coverage \
+          --concurrency=${{ inputs.concurrency }} \
           ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
           ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
           ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-          -r github
-          --no-pub
-          --coverage
+          
 
     - name: Install genhtml
       shell: bash
