@@ -1,8 +1,0 @@
-name: Build and publish Android app
-description: Build and publish the Android app using Flutter
-inputs:
-
-runs:
-  using: 'composite'
-  steps:
-    

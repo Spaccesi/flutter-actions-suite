@@ -1,4 +1,0 @@
-name: Build windows app
-description: Build the windows app using Flutter
-inputs:
-  
