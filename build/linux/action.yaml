@@ -20,6 +20,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Install Linux build dependencies
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev
+
     - name: Build Linux App
       shell: bash
       run: |
