@@ -1,0 +1,227 @@
+name: Test Actions
+
+# Tests each composite action against a freshly created Flutter project.
+#
+# Strategy: the leaf composite actions run `flutter` commands from
+# $GITHUB_WORKSPACE. To give them a valid Flutter project to operate on, each
+# job:
+#   1. Checks out this repo (action files) to $GITHUB_WORKSPACE.
+#   2. Creates a minimal Flutter app in /tmp and copies its files into the
+#      workspace root (Flutter-specific paths don't conflict with action paths).
+#   3. Runs the local action via `uses: ./<action-path>`.
+#
+# Note: orchestrator actions (check/action.yaml, root action.yml) reference
+# sub-actions by absolute GitHub path, so they always call the published
+# version. Only leaf actions are tested here to catch local changes on PRs.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # ── Lint ───────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint action YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+
+  # ── Secret availability check (avoids paying for macOS runners needlessly) ─
+  check-secrets:
+    name: Check secret availability
+    runs-on: ubuntu-latest
+    outputs:
+      has-android: ${{ steps.check.outputs.has-android }}
+      has-macos: ${{ steps.check.outputs.has-macos }}
+      has-ios: ${{ steps.check.outputs.has-ios }}
+    steps:
+      - name: Check secrets
+        id: check
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          MACOS_CERT: ${{ secrets.MACOS_SIGNING_CERTIFICATE_BASE64 }}
+          IOS_CERT: ${{ secrets.IOS_SIGNING_CERTIFICATE_BASE64 }}
+        run: |
+          [[ -n "$ANDROID_KEYSTORE" ]] && echo "has-android=true" >> $GITHUB_OUTPUT || echo "has-android=false" >> $GITHUB_OUTPUT
+          [[ -n "$MACOS_CERT" ]]       && echo "has-macos=true"   >> $GITHUB_OUTPUT || echo "has-macos=false"   >> $GITHUB_OUTPUT
+          [[ -n "$IOS_CERT" ]]         && echo "has-ios=true"     >> $GITHUB_OUTPUT || echo "has-ios=false"     >> $GITHUB_OUTPUT
+
+  # ── check/analyze ──────────────────────────────────────────────────────────
+  test-analyze:
+    name: Test check/analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run check/analyze
+        uses: ./check/analyze
+        with:
+          # Relax severity so a stock generated app doesn't fail
+          treat-infos-as-fatal: 'false'
+          treat-warnings-as-fatal: 'false'
+          no-pub: 'true'
+
+  # ── check/test ─────────────────────────────────────────────────────────────
+  test-flutter-test:
+    name: Test check/test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run check/test
+        uses: ./check/test
+
+  # ── build/web ──────────────────────────────────────────────────────────────
+  test-build-web:
+    name: Test build/web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/web
+        uses: ./build/web
+        with:
+          no-pub: 'true'
+
+  # ── build/linux ────────────────────────────────────────────────────────────
+  test-build-linux:
+    name: Test build/linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake libgtk-3-dev ninja-build pkg-config
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/linux
+        uses: ./build/linux
+
+  # ── build/windows ──────────────────────────────────────────────────────────
+  test-build-windows:
+    name: Test build/windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        shell: bash
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/windows
+        uses: ./build/windows
+
+  # ── build/android ──────────────────────────────────────────────────────────
+  # Requires secrets: ANDROID_KEYSTORE_BASE64, ANDROID_STORE_PASSWORD,
+  #                   ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS,
+  #                   ANDROID_LOCAL_PROPERTIES
+  test-build-android:
+    name: Test build/android
+    needs: check-secrets
+    if: ${{ needs.check-secrets.outputs.has-android == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/android
+        uses: ./build/android
+        with:
+          android-keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          android-store-password: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          android-key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          android-key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          android-local-properties-file: ${{ secrets.ANDROID_LOCAL_PROPERTIES }}
+
+  # ── build/macos ────────────────────────────────────────────────────────────
+  # Requires secret: MACOS_SIGNING_CERTIFICATE_BASE64
+  test-build-macos:
+    name: Test build/macos
+    needs: check-secrets
+    if: ${{ needs.check-secrets.outputs.has-macos == 'true' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/macos
+        uses: ./build/macos
+        with:
+          macos-signing-certificate-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE_BASE64 }}
+
+  # ── build/ios ──────────────────────────────────────────────────────────────
+  # Requires secret: IOS_SIGNING_CERTIFICATE_BASE64
+  test-build-ios:
+    name: Test build/ios
+    needs: check-secrets
+    if: ${{ needs.check-secrets.outputs.has-ios == 'true' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run build/ios
+        uses: ./build/ios
+        with:
+          ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_CERTIFICATE_BASE64 }}
