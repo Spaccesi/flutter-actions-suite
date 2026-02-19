@@ -46,4 +46,4 @@ The action will run `gen-l10n` on `my_app` and `feature_auth`, and skip `design_
 
 > **Note**: Packages are discovered up to 3 directories deep. Make sure your localization ARB files and `l10n.yaml` (if used) are properly configured in each package.
 
-> **Note**: In the future this discovery may be not needed depending on how workspaces will evolve.
+> **Note**: In the future, this discovery step may not be needed depending on how workspaces evolve.

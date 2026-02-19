@@ -45,6 +45,6 @@ Runs Flutter tests with optional coverage reporting and optionally deployment to
 
 ## Workspaces & Monorepos
 
-This action runs tests from the current working directory. In monorepos, and most recent versions of flutter and dart, running this function in the root folder is enough. 
+This action runs tests from the current working directory. In monorepos with recent versions of Flutter and Dart, running this action from the root folder is sufficient.
 
-Previous versions of flutter where workspace is not available are not supported at the moment.
+Flutter versions that do not support workspaces are not supported at the moment.

@@ -29,6 +29,6 @@ Runs `flutter analyze` and formatting checks with configurable severity levels.
 
 ## Workspaces & Monorepos 
 
-This action runs analyzer from the current working directory. In monorepos, and most recent versions of flutter and dart, running this function in the root folder is enough. 
+This action runs the analyzer from the current working directory. In monorepos with recent versions of Flutter and Dart, running this action from the root folder is sufficient.
 
-Previous versions of flutter where workspace is not available are not supported at the moment.
+Flutter versions that do not support workspaces are not supported at the moment.

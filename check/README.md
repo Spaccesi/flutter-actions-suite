@@ -34,7 +34,7 @@ This composite action calls the following sub-actions:
 | `license-fails-on-warnings` | Fail if license warnings found. | No | `false` |
 | `license-fails-on-info` | Fail if license info found. | No | `false` |
 | `run-coverage` | Collect test coverage. | No | `false` |
-| `no-pub` | Install dependecies or not. | No | `true` |
+| `no-pub` | Whether to skip `pub get` before running checks. | No | `true` |
 
 > **Note**: For all inputs related to tests (dart-define, flavor, concurrency, timeout, ignore-timeouts), see the [Test Sub-Action README](./test/README.md).
 

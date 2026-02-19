@@ -16,7 +16,7 @@ build/
 
 ## Important
 
-No other action but build is performed before. You will need to install flutter, and run `/prepare` before running any `/build`.
+This action only handles the build step. You must install Flutter and run `/prepare` before running any `/build` action.
 
 ## Usage
 

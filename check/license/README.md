@@ -32,4 +32,4 @@ permittedLicenses:
 
 1. Activates the `license_checker` Dart package globally.
 2. Runs `lic_ck check-licenses` using the provided configuration path.
-3. Parses the output for "No package licenses need approval!" string if not found fails.
+3. Parses the output for the "No package licenses need approval!" string; if not found, the action fails.
