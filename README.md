@@ -1,6 +1,7 @@
-# Flutter Multi-Platform Build & Deploy Action
+# Flutter Multi-Platform Github Actions Suite
 
-This GitHub Action builds and deploys Flutter applications for iOS, Android, Web, macOS, Windows, and Linux. It supports modular builds via boolean flags and deployment to App Store Connect, Firebase App Distribution, and Firebase Hosting.
+This GitHub Action prepares, checks, builds and deploys Flutter applications for iOS, Android, Web, macOS, Windows, and Linux. It supports modular builds via boolean flags and deployment to App Store Connect, Firebase App Distribution, Firebase Hosting, Play Store, Microsoft Store, and Snap Store.
+
 
 ## Features
 
@@ -32,26 +33,10 @@ Each step of the pipeline is available as an independent action. This gives you 
 | **Build Runner** | [`/prepare/build_runner`](./prepare/build_runner) | Run `build_runner` across the repository. |
 | **Gen L10n** | [`/prepare/gen-l10n`](./prepare/gen-l10n) | Run `gen-l10n` localization across the repository. |
 | **Docs** | [`/docs`](./docs) | Generate project documentation with `dartdoc`. |
-| **Release** | `/release/{platform}` | Build and Publish project (Desktop/Mobile/Web). |
+| **Build** | `/build/{platform}` | Build project (ios/android/web/macos/windows/linux). |
+| **Publish** | `/publish/{platform}` | TODO |
 
 ## Usage
-
-### Full Pipeline Example
-
-```yaml
-jobs:
-  build:
-    runs-on: macos-latest # Required for iOS/macOS
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Flutter Actions Suite
-        uses: Spaccesi/flutter-actions-suite@main
-        with:
-          flutter-version: '3.19.0'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-coverage-report: 'github-pages'
-```
 
 ### Using Individual Actions
 
@@ -66,15 +51,6 @@ You can use sub-actions to have more granular control:
   with:
     run-coverage: 'true'
 ```
-
-## Action Reference - Root Action (`./`)
-
-| Input | Description | Required | Default |
-| --- | --- | --- | --- |
-| `flutter-version` | The Flutter version to use. | **Yes** | - |
-| `flutter-channel` | Flutter channel (`stable`, `beta`, `dev`, `master`). | No | `stable` |
-| `github-token` | Token for GitHub Pages deployment. | No | `''` |
-| `deploy-coverage-report` | Options: `none`, `github-pages`, `artifact`. | No | `none` |
 
 ## Notes
 
