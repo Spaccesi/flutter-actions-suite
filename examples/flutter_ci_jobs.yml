@@ -1,0 +1,291 @@
+# Flutter CI – Parallel Build Example
+#
+# Workflow structure
+# ──────────────────
+# Phase 1 (sequential, ubuntu-latest)
+#   1. Install Flutter
+#   2. Prepare the repository  (flutter pub get + build_runner + gen-l10n)
+#   3. Run checks              (flutter analyze + flutter test)
+#   4. Upload the prepared workspace as an artifact
+#
+# Phase 2 (parallel, each on the required runner)
+#   All jobs run concurrently once Phase 1 passes.
+#   Each job:
+#     1. Downloads the prepared workspace artifact
+#        (generated code is already present — no need to re-run code-gen)
+#     2. Installs Flutter
+#     3. Restores pub packages (fast thanks to GitHub Actions cache)
+#     4. Builds the target platform
+#     5. Uploads the build output as an artifact
+#
+# Prerequisites
+# ─────────────
+# Set the following secrets in your repository settings:
+#   ANDROID_STORE_FILE_BASE64       – base64-encoded Android keystore (.jks)
+#   ANDROID_STORE_PASSWORD          – keystore password
+#   ANDROID_KEY_ALIAS               – key alias
+#   ANDROID_KEY_PASSWORD            – key password
+#   ANDROID_LOCAL_PROPERTIES        – content of android/local.properties
+#   IOS_SIGNING_CERTIFICATE_BASE64  – base64-encoded iOS certificate (.p12)
+#   IOS_SIGNING_CERTIFICATE_PASSWORD– certificate password
+#   IOS_PROVISIONING_PROFILE_BASE64 – base64-encoded provisioning profile
+#   MACOS_SIGNING_CERTIFICATE_BASE64– base64-encoded macOS certificate (.p12)
+
+name: Flutter CI - Parallel Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FLUTTER_VERSION: '3.41.0'   # pin to a specific Flutter version
+  FLUTTER_CHANNEL: 'stable'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 1 – Sequential: prepare & check
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  prepare:
+    name: Prepare & Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Flutter (result is cached for subsequent runs)
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      # Run flutter pub get, build_runner and gen-l10n (if present)
+      - name: Prepare repository
+        uses: Spaccesi/flutter-actions-suite/prepare@main
+        with:
+          run-build-runner: 'true'
+          run-gen-l10n: 'true'
+          gen-l10n-fails-if-untranslated: 'false'
+
+      # Run static analysis and unit tests – any failure here blocks all builds
+      - name: Run checks
+        uses: Spaccesi/flutter-actions-suite/check@main
+        with:
+          run-analyze: 'true'
+          analyze-fails-if-warnings: 'true'
+          analyze-fails-if-infos: 'false'
+          run-test: 'true'
+          run-coverage: 'false'
+          # To enable license checks, set run-license to 'true' and provide the
+          # path to your compatible-licenses config file:
+          compatible-licenses-conf-path: '.github/compatible_licenses.yml'
+          run-license: 'false'
+
+      # Upload the entire workspace (including generated files) so build jobs
+      # can download it and skip expensive code-generation steps.
+      # .git is excluded to keep the artifact size small.
+      - name: Upload prepared workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: prepared-repo
+          path: |
+            .
+            !.git
+          retention-days: 1   # artifact is only needed within this workflow run
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 2 – Parallel: platform builds
+# All jobs start at the same time once the `prepare` job succeeds.
+# ─────────────────────────────────────────────────────────────────────────────
+
+  # ── Android ────────────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      # The artifact does not carry the pub cache, so we restore packages here.
+      # This is fast because GitHub Actions caches the pub cache between runs.
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build Android
+        uses: Spaccesi/flutter-actions-suite/build/android@main
+        with:
+          android-store-file-base64: ${{ secrets.ANDROID_STORE_FILE_BASE64 }}
+          android-store-password: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          android-key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          android-key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          android-local-properties-file: ${{ secrets.ANDROID_LOCAL_PROPERTIES }}
+          build-type: 'appbundle'
+          build-mode: 'release'
+          no-pub: 'true'   # pub get was already run above
+
+  # ── iOS ────────────────────────────────────────────────────────────────────
+  build-ios:
+    name: Build iOS
+    needs: prepare
+    runs-on: macos-latest   # iOS builds require a macOS runner
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build iOS
+        uses: Spaccesi/flutter-actions-suite/build/ios@main
+        with:
+          ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_CERTIFICATE_BASE64 }}
+          ios-signing-certificate-password: ${{ secrets.IOS_SIGNING_CERTIFICATE_PASSWORD }}
+          ios-provisioning-profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          build-mode: 'release'
+          no-pub: 'true'
+
+  # ── Web ────────────────────────────────────────────────────────────────────
+  build-web:
+    name: Build Web
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build Web
+        uses: Spaccesi/flutter-actions-suite/build/web@main
+        with:
+          build-mode: 'release'
+          no-pub: 'true'
+          # wasm: 'true'   # uncomment to build with WebAssembly
+
+  # ── Windows ────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Build Windows
+    needs: prepare
+    runs-on: windows-latest   # Windows builds require a Windows runner
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build Windows
+        uses: Spaccesi/flutter-actions-suite/build/windows@main
+        with:
+          build-mode: 'release'
+          no-pub: 'true'
+
+  # ── macOS ──────────────────────────────────────────────────────────────────
+  build-macos:
+    name: Build macOS
+    needs: prepare
+    runs-on: macos-latest   # macOS builds require a macOS runner
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build macOS
+        uses: Spaccesi/flutter-actions-suite/build/macos@main
+        with:
+          macos-signing-certificate-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE_BASE64 }}
+          build-mode: 'release'
+          no-pub: 'true'
+
+  # ── Linux ──────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Build Linux
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download prepared workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-repo
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Restore pub packages
+        run: flutter pub get
+        shell: bash
+
+      - name: Build Linux
+        uses: Spaccesi/flutter-actions-suite/build/linux@main
+        with:
+          build-mode: 'release'
+          no-pub: 'true'
+

@@ -213,7 +213,6 @@ runs:
         no-pub: 'true'
         target: ${{ inputs.target }}
         wasm: ${{ inputs.wasm }}
-        pwa-strategy: ${{ inputs.pwa-strategy }}
         static-assets-url: ${{ inputs.static-assets-url }}
         base-href: ${{ inputs.base-href }}
 
