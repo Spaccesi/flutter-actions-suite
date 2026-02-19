@@ -132,6 +132,9 @@ inputs:
     description: 'The build mode to use when building the Android app. Available options: apk, appbundle. Default is appbundle.'
     required: false
     default: 'appbundle'
+  android-local-properties-file:
+    description: 'Path to a local.properties file containing the path to the Android SDK. This is required if the Android SDK is not available in the default location on the runner.'
+    required: false
   
 
  
@@ -168,15 +171,16 @@ runs:
       if: contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/build/android@main
       with:
-        android-keystore-base64: ${{ inputs.android-keystore-base64 }}
-        android-keystore-alias: ${{ inputs.android-keystore-alias }}
-        android-keystore-password: ${{ inputs.android-keystore-password }}
+        android-store-file-base64: ${{ inputs.android-store-file-base64 }}
+        android-local-properties-file: ${{ inputs.android-local-properties-file }}
+        android-key-alias: ${{ inputs.android-keystore-alias }}
+        android-store-password: ${{ inputs.android-keystore-password }}
         android-key-password: ${{ inputs.android-key-password }}
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
         flavor: ${{ inputs.flavor }}
-        dart-define: ${{ inputs.dart-define }}
+        dart-define: ${{ inputs.dart-defines }}
         no-pub: ${{ inputs.no-pub }}
         target: ${{ inputs.target }}
         obfuscate: ${{ inputs.obfuscate }}
@@ -205,15 +209,13 @@ runs:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
-        flavor: ${{ inputs.flavor }}
         dart-define: ${{ inputs.dart-define }}
         no-pub: 'true'
         target: ${{ inputs.target }}
-        obfuscate: ${{ inputs.obfuscate }}
         wasm: ${{ inputs.wasm }}
         pwa-strategy: ${{ inputs.pwa-strategy }}
-        asset-base-url: ${{ inputs.asset-base-url }}
-        href-base: ${{ inputs.href-base }}
+        static-assets-url: ${{ inputs.static-assets-url }}
+        base-href: ${{ inputs.base-href }}
 
     - name: Build windows
       if: contains(inputs.build-platform, 'windows')
@@ -222,7 +224,6 @@ runs:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
-        flavor: ${{ inputs.flavor }}
         dart-define: ${{ inputs.dart-define }}
         no-pub: 'true'
         target: ${{ inputs.target }}
@@ -242,7 +243,7 @@ runs:
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
         flavor: ${{ inputs.flavor }}
-        dart-define: ${{ inputs.dart-define }}
+        dart-defines: ${{ inputs.dart-define }}
         no-pub: 'true'
         target: ${{ inputs.target }}
         obfuscate: ${{ inputs.obfuscate }}

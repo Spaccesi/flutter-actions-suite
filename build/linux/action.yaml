@@ -10,10 +10,10 @@ description: |
   this action in a workflow that runs on a Linux runner.
 
 inputs:
-  flavor:
-    description: 'The flavor to build (if applicable).'
+  build-mode:
+    description: 'The build mode to use when building the app. Available options: debug, profile, release. Default is release.'
     required: false
-    default: ''
+    default: 'release'
   build-name:
     description: 'The build name to use for the Linux app.'
     required: false
@@ -72,7 +72,7 @@ runs:
       shell: bash
       run: |
         flutter build linux \
-          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
+          --${{ inputs.build-mode }} \
           ${{ inputs.build-name != '' && '--build-name=${{ inputs.build-name }}' || '' }} \
           ${{ inputs.build-number != '' && '--build-number=${{ inputs.build-number }}' || '' }} \
           ${{ inputs.dart-defines != '' && '--dart-define=${{ inputs.dart-defines }}' || '' }} \
