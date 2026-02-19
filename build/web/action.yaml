@@ -1,5 +1,12 @@
 name: Build web app
-description: Build the web app using Flutter
+description: |
+  This action builds the web version of the Flutter app using 
+  the `flutter build web` command. You can customize the build 
+  by providing various inputs such as build mode, build name, build number, 
+  dart defines, and more. The built web app will be output in the specified 
+  directory (default is `build/web`).
+  The action also supports additional web-specific options such as base href, 
+  static assets URL, PWA strategy, and WebAssembly support.
 inputs:
   dart-define:
     description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"

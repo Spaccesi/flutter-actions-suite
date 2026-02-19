@@ -1,5 +1,14 @@
 name: Build Linux
-description: 'Builds a Linux app using Flutter.'
+description: |
+  Build the Linux app using Flutter. This action will install the necessary dependencies for building 
+  Linux apps and then run the `flutter build linux` command with the specified options. You can 
+  provide a flavor, build name, build number, and dart defines as inputs to customize the build. 
+  The built Linux app will be output in the `build/linux` directory of your Flutter project.
+
+  IMPORTANT!: This action is intended for building Linux apps on a Linux runner, as it relies on 
+  Linux-specific dependencies and tools. It will not work on non-Linux runners. Make sure to use 
+  this action in a workflow that runs on a Linux runner.
+
 inputs:
   flavor:
     description: 'The flavor to build (if applicable).'
@@ -17,6 +26,41 @@ inputs:
     description: 'Dart defines in KEY=VALUE format, one per line.'
     required: false
     default: ''
+  dart-define-from-file:
+    description: 'Path to a file containing Dart define variables for the Flutter build (optional)'
+    required: false
+  obfuscate:
+    description: 'Whether to obfuscate the Dart code in release builds (default: false).'
+    required: false
+    default: 'false'
+  no-pub:
+    description: 'Whether to skip running pub get before building. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
+    required: false
+    default: 'false'
+  target:
+    description: 'The main entry-point file of the application (default: lib/main.dart).'
+    required: false
+    default: 'lib/main.dart'
+  split-debug-info:
+    description: 'Whether to split the debug info into a separate file in a release build. This flag reduces application size by storing Dart program symbols in a separate file on the host rather than in the application. The value of the flag should be a directory where program symbol files can be stored for later use. These symbol files contain the information needed to symbolize Dart stack traces. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
+    required: false
+  no-tree-shake-icons:
+    description: 'Whether to tree shake icon fonts so that only glyphs used by the application remain. This flag is enabled by default.'
+    required: false
+    default: 'false'
+  no-analyze-size:
+    description: 'Whether to produce additional profile information for artifact output size. This flag is only supported on "--release" builds. When building for Android, a single ABI must be specified at a time with the "--target-platform" flag. When building for iOS, only the symbols from the arm64 architecture are used to analyze code size. By default, the intermediate output files will be placed in a transient directory in the build directory. This can be overridden with the "--code-size-directory" option. This flag cannot be combined with "--split-debug-info".'
+    required: false
+    default: 'false'
+  code-size-directory:
+    description: 'The location to write code size analysis files. If this is not specified, files are written to a temporary directory under the build directory.'
+    required: false
+  target-platform:
+    description: 'The target platform to build for (e.g. "linux-x64", "linux-arm64"). If not specified, the default host platform will be used.'
+    required: false
+  target-sysroot:
+    description: 'The target system to build for (e.g. "linux"). If not specified, the default host system will be used.'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -31,4 +75,14 @@ runs:
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
           ${{ inputs.build-name != '' && '--build-name=${{ inputs.build-name }}' || '' }} \
           ${{ inputs.build-number != '' && '--build-number=${{ inputs.build-number }}' || '' }} \
-          ${{ inputs.dart-defines != '' && '--dart-define=${{ inputs.dart-defines }}' || '' }}
+          ${{ inputs.dart-defines != '' && '--dart-define=${{ inputs.dart-defines }}' || '' }} \
+          ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
+          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
+          ${{ inputs.target != '' && '--target=${{ inputs.target }}' || '' }} \
+          ${{ inputs.split-debug-info != '' && '--split-debug-info=${{ inputs.split-debug-info }}' || '' }} \
+          ${{ inputs.no-tree-shake-icons == 'true' && '--no-tree-shake-icons' || '' }} \
+          ${{ inputs.no-analyze-size == 'true' && '--no-analyze-size' || '' }} \
+          ${{ inputs.code-size-directory != '' && '--code-size-directory=${{ inputs.code-size-directory }}' || '' }} \
+          ${{ inputs.target-platform != '' && '--target-platform=${{ inputs.target-platform }}' || '' }} \
+          ${{ inputs.target-sysroot != '' && '--target-sysroot=${{ inputs.target-sysroot }}' || '' }}

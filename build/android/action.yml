@@ -1,7 +1,17 @@
 name: Build android
-description: Build android app
+description: |
+  Build the Android app using Flutter. This action requires a base64 
+  encoded Android keystore file to be provided as input, which will 
+  be used to sign the app during the build process. The action also 
+  supports various build options such as build type (apk or appbundle), 
+  build mode, flavor, dart defines, obfuscation, and more. The built 
+  app will be signed with the provided keystore, allowing it to be 
+  installed on Android devices or submitted to the Google Play Store.
+
+  IMPORTANT!: This action is intended for building Android apps on a Linux 
+  runner, as it relies on the Android SDK and Java.
 inputs:
-  android-keystore-base64:
+  android-store-file-base64:
     description: "Base64 encoded Android keystore file"
     required: true
   android-store-password:
@@ -30,6 +40,9 @@ inputs:
   dart-define:
     description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
     required: false
+  dart-define-from-file:
+    description: "Path to a file containing Dart define variables for the Flutter build (optional)"
+    required: false
   build-type:
     description: "Type of build to perform (default: appbundle, options: apk, appbundle)"
     required: false
@@ -38,6 +51,21 @@ inputs:
     description: "Build mode for the Android app (debug, profile, release)"
     required: false
     default: "release"
+  build-name:
+    description: "Name of the build (optional)"
+    required: false
+  build-number:
+    description: "Number of the build (optional)"
+    required: false
+  no-pub:
+    description: "Whether to skip publishing (default: false)"
+    required: false
+  target:
+    description: "Target file for the build (optional)"
+    required: false
+  obfuscate:
+    description: "Whether to obfuscate the build (default: false)"
+    required: false
 runs:  
   using: "composite"
   steps:
@@ -46,7 +74,7 @@ runs:
       uses: timheuer/base64-to-file@v1
       with:
         fileName: upload-keystore.jks
-        encodedString: ${{ inputs.android-keystore-base64 }}
+        encodedString: ${{ inputs.android-store-file-base64 }}
         
     - name: Create key.properties file
       shell: bash
@@ -69,12 +97,14 @@ runs:
     - name: Start Android Release Build
       shell: bash
       run: |
-        flutter build --${{ inputs.build-type }} \
+        flutter build ${{ inputs.build-type }} \
           --${{ inputs.build-mode }} \
           ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
+          ${{ inputs.dart-define-from-file != '' && format('--dart-define-from-file={0}', inputs.dart-define-from-file) || '' }} \
           ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
           ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
           ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.flavor && format('--flavor={0}', inputs.flavor) || '' }} \
+          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }}
           

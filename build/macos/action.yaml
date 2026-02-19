@@ -1,5 +1,14 @@
 name: Build macos app
-description: Build the macOS app using Flutter
+description: |
+  Build the macOS app using Flutter. This action requires a base64 encoded macOS signing 
+  certificate (p12 file) to be provided as input, which will be used to sign the app during 
+  the build process. The action also supports various build options such as build mode, flavor, 
+  dart defines, obfuscation, and more. The built app will be signed with the provided certificate, 
+  allowing it to be installed on macOS devices or submitted to the Mac App Store. 
+
+  IMPORTANT!: This action is intended for building macOS apps on a macOS runner, as it relies on 
+  Xcode and the Apple code signing tools. It will not work on non-macOS runners. 
+  Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
   macos-signing-certificate-base64:
     description: "Base64 encoded macOS signing certificate (p12 file)"
@@ -33,7 +42,6 @@ inputs:
     description: "Whether to codesign the application bundle (only available on device builds, default: true)"
     required: false
     default: "true"
-
  
 runs:  
   using: "composite"
@@ -44,8 +52,7 @@ runs:
       with:
         fileName: macos-signing-certificate.p12
         encodedString: ${{ inputs.macos-signing-certificate-base64 }} 
-
-    
+        
     - name: Build macOS app
       shell: bash
       run: |

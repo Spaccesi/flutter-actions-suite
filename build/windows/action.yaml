@@ -1,5 +1,13 @@
 name: Build windows app
-description: Build the windows app using Flutter
+description: |
+  Build the Windows app using Flutter. This action will install the necessary dependencies for building 
+  Windows apps and then run the `flutter build windows` command with the specified options. You can 
+  provide a build mode, build name, build number, dart defines, and other inputs to customize the 
+  build. The built Windows app will be output in the `build/windows` directory of your Flutter project.
+
+  IMPORTANT!: This action is intended for building Windows apps on a Windows runner, as it relies on 
+  Windows-specific dependencies and tools. It will not work on non-Windows runners. Make sure to use 
+  this action in a workflow that runs on a Windows runner.
 inputs:
   build-mode:
     description: 'The build mode to use when building the app. Available options: debug, profile, release. Default is release.'
