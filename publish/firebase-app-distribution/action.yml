@@ -1,6 +1,9 @@
 name: Publish to Firebase App Distribution
 description: Publish the app to Firebase App Distribution
 inputs:
+  release-binary-file:
+    description: 
+    required: true
   firebase-service-account-base64:
     description: "Base64 encoded Firebase service account JSON key file"
     required: true
@@ -63,16 +66,12 @@ runs:
     - name: Install Firebase CLI
       shell: bash
       run: |
-        curl -sL https://firebase.tools | bash
+        npm install -g firebase-tools
 
-    - name: Download Firebase service account key
-      id: firebase_service_account
-      uses: timheuer/base64-to-file@v1
-      with:
-        fileName: firebase-service-account.json
-        encodedString: ${{ inputs.firebase-service-account-base64 }} 
     - name: Publish to Firebase App Distribution
       shell: bash
+      env:
+        FIREBASE_TOKEN: ${{ inputs.firebase-token }}
       run: |
         firebase appdistribution:distribute \
           --app ${{ inputs.app-id }} \
@@ -86,4 +85,4 @@ runs:
           ${ inputs.test-non-blocking == "true" && "--non-blocking" } \
           ${ inputs.test-case-ids && "--test-case-ids " + inputs.test-case-ids } \
           ${ inputs.test-case-ids-file && "--test-case-ids-file " + inputs.test-case-ids-file } \
-          --token "$(cat firebase-service-account.json | jq -r '.private_key')"
+          ${{ inputs.release-binary-file }}

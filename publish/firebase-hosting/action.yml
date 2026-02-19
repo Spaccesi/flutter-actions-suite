@@ -25,16 +25,12 @@ runs:
   steps:
     - name: Install Firebase CLI
       shell: bash
-      run: |
-        curl -sL https://firebase.tools | bash
-    - name: Download Firebase service account key
-      id: firebase_service_account
-      uses: timheuer/base64-to-file@v1
-      with:
-        fileName: firebase-service-account.json
-        encodedString: ${{ inputs.firebase-service-account-base64 }}
+      run: npm install -g firebase-tools
+
     - name: Publish to Firebase Hosting
       shell: bash
+      env:
+        FIREBASE_TOKEN: ${{ inputs.firebase-token }}
       run: |
         firebase deploy \
           --only hosting:${{ inputs.target || 'default' }} \
