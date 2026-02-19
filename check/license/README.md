@@ -9,7 +9,6 @@ Check that all dependency licenses are compatible with your project. This action
   uses: Spaccesi/flutter-actions-suite/check/license@main
   with:
     compatible-licenses-conf-path: 'config/compatible_licenses.yaml'
-    fail-on-warnings: true
 ```
 
 ## Inputs
@@ -17,8 +16,6 @@ Check that all dependency licenses are compatible with your project. This action
 | Input | Description | Required | Default |
 | --- | --- | --- | --- |
 | `compatible-licenses-conf-path` | Path to a file containing a list of compatible licenses. | **Yes** | - |
-| `fail-on-warnings` | Fail the action if warnings are found. | No | `false` |
-| `fail-on-info` | Fail the action if info messages are found. | No | `false` |
 
 ## Compatible Licenses Configuration
 
@@ -35,5 +32,4 @@ permittedLicenses:
 
 1. Activates the `license_checker` Dart package globally.
 2. Runs `lic_ck check-licenses` using the provided configuration path.
-3. Parses the output for "warning" or "info" strings if configured to fail on them.
-4. Fails if the tool returns a non-zero exit code or if prohibited messages are found.
+3. Parses the output for "No package licenses need approval!" string if not found fails.

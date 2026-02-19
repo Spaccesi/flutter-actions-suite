@@ -27,6 +27,8 @@ Runs `flutter analyze` and formatting checks with configurable severity levels.
 2. If `no-pub` is true, it appends `--no-pub` to the command (default behavior).
 3. If analysis finds issues exceeding the configured severity, the action fails.
 
-## Workspaces & Monorepos
+## Workspaces & Monorepos 
 
-This action runs `flutter analyze .` from the current working directory. In monorepos, you can use a matrix strategy to run it in multiple package directories, or rely on a root-level workspace configuration if applicable.
+This action runs analyzer from the current working directory. In monorepos, and most recent versions of flutter and dart, running this function in the root folder is enough. 
+
+Previous versions of flutter where workspace is not available are not supported at the moment.

@@ -18,8 +18,6 @@ Runs Flutter tests with optional coverage reporting and optionally deployment to
   uses: Spaccesi/flutter-actions-suite/check/test@main
   with:
     run-coverage: 'true'
-    deploy-report: 'github-pages' # or 'artifact' or 'none'
-    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Inputs
@@ -47,4 +45,6 @@ Runs Flutter tests with optional coverage reporting and optionally deployment to
 
 ## Workspaces & Monorepos
 
-This action runs tests from the current working directory. In monorepos, use a matrix strategy to run tests for different packages.
+This action runs tests from the current working directory. In monorepos, and most recent versions of flutter and dart, running this function in the root folder is enough. 
+
+Previous versions of flutter where workspace is not available are not supported at the moment.

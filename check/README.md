@@ -42,4 +42,4 @@ This composite action calls the following sub-actions:
 
 1. **Setup**: Assumes Flutter is already installed (usually via the root action).
 2. **Modular execution**: Each check can be disabled via boolean flags.
-3. **Monorepo support**: Designed to work within monorepos when run from the appropriate package or root directory.
+3. **Monorepo support**: Designed to work within monorepos when workspace is configured.

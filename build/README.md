@@ -16,7 +16,7 @@ build/
 
 ## Important
 
-No other action but build is performed before. I will need to install flutter, and run `/prepare` before running any `/build`.
+No other action but build is performed before. You will need to install flutter, and run `/prepare` before running any `/build`.
 
 ## Usage
 
