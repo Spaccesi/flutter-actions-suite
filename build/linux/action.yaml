@@ -37,10 +37,6 @@ inputs:
     description: 'Whether to skip running pub get before building. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
     required: false
     default: 'false'
-  target:
-    description: 'The main entry-point file of the application (default: lib/main.dart).'
-    required: false
-    default: 'lib/main.dart'
   split-debug-info:
     description: 'Whether to split the debug info into a separate file in a release build. This flag reduces application size by storing Dart program symbols in a separate file on the host rather than in the application. The value of the flag should be a directory where program symbol files can be stored for later use. These symbol files contain the information needed to symbolize Dart stack traces. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
     required: false
@@ -79,7 +75,6 @@ runs:
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
           ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.target != '' && '--target=${{ inputs.target }}' || '' }} \
           ${{ inputs.split-debug-info != '' && '--split-debug-info=${{ inputs.split-debug-info }}' || '' }} \
           ${{ inputs.no-tree-shake-icons == 'true' && '--no-tree-shake-icons' || '' }} \
           ${{ inputs.no-analyze-size == 'true' && '--no-analyze-size' || '' }} \

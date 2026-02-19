@@ -245,7 +245,6 @@ runs:
         flavor: ${{ inputs.flavor }}
         dart-defines: ${{ inputs.dart-define }}
         no-pub: 'true'
-        target: ${{ inputs.target }}
         obfuscate: ${{ inputs.obfuscate }}
 
     # - name: Publish to GitHub Releases

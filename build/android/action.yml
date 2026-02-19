@@ -70,6 +70,7 @@ runs:
   using: "composite"
   steps:
     - name: Download Android keystore
+      if: ${{ inputs.build-mode != 'debug' }}
       id: android_keystore
       uses: timheuer/base64-to-file@v1
       with:
@@ -78,6 +79,7 @@ runs:
         
     - name: Create key.properties file
       shell: bash
+      if: ${{ inputs.build-mode != 'debug' }}
       run: |
         echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
         echo "storePassword=${{ inputs.android-store-password }}" >> android/key.properties
@@ -86,6 +88,7 @@ runs:
 
     - name: Create local.properties file
       shell: bash
+      if: ${{ inputs.build-mode != 'debug' }}
       run: |
         echo '${{ inputs.android-local-properties-file }}' > android/local.properties
 
@@ -106,5 +109,5 @@ runs:
           ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.flavor && format('--flavor={0}', inputs.flavor) || '' }} \
-          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }}
+          ${{ inputs.obfuscate == 'false' && '--no-obfuscate' || '' }}
           

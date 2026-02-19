@@ -97,11 +97,11 @@ runs:
       shell: bash
       run: |
         flutter build ipa --${{ inputs.build-mode }} \
-          ${ inputs.flavor && "--flavor " + inputs.flavor } \
-          ${ inputs.dart-define && "--dart-define " + inputs.dart-define } \
-          ${ inputs.obfuscate == "false" && "--no-obfuscate" } \
-          ${ inputs.no-pub == "true" && "--no-pub" } \
-          ${ inputs.target && "--target " + inputs.target } \
-          ${ inputs.build-number && "--build-number " + inputs.build-number } \
-          ${ inputs.build-name && "--build-name " + inputs.build-name } \
-          ${ inputs.code-sign == "false" && "--no-codesign" }
+          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
+          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
+          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
+          ${{ inputs.flavor != '' && format('--flavor={0}', inputs.flavor) || '' }} \
+          ${{ inputs.target != '' && format('--target={0}', inputs.target) || '' }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
+          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
+          ${{ inputs.code-sign == 'false' && '--no-codesign' || '' }}
