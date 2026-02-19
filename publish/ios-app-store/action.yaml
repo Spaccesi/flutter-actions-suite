@@ -1,1 +1,67 @@
-# TODO
+name: Publish Flutter iOS app to App Store
+description: | 
+  Publish the built Flutter iOS app to the App Store using the 
+  App Store Connect API. This action assumes that you have already 
+  built the iOS app and generated an .ipa file in a previous step.
+
+  The action requires the following inputs:
+  - app-store-connect-key: A base64 encoded App Store Connect API key file (JSON format).
+  - app-id: The App Store Connect app ID (e.g. 1234567890).
+  - app-version: The version of the app to publish (e.g. 1.0.0).
+  - release-notes: Release notes for this version (optional).
+  - release-notes-file: Path to a file containing release notes for this version (optional).
+
+inputs:
+  app-store-connect-key:
+    description: "Base64 encoded App Store Connect API key file (JSON format)"
+    required: true
+  app-id:
+    description: "App Store Connect app ID (e.g. 1234567890)"
+    required: true
+  app-version:
+    description: "Version of the app to publish (e.g. 1.0.0)"
+    required: true
+  release-notes:
+    description: "Release notes for this version (optional)"
+    required: false
+  release-notes-file:
+    description: "Path to a file containing release notes for this version (optional)"
+    required: false
+    
+runs:  
+  using: "composite"
+  steps:
+    - name: Install certificates (if needed)
+      shell: bash
+      env:
+        APP_STORE_CONNECT_KEY: ${{ inputs.app-store-connect-key }}
+      run: |
+        # Create temporary directory for the API key
+        mkdir -p $RUNNER_TEMP/app_store_connect_key
+        
+        # Decode the base64 encoded API key and save it to a file
+        echo "$APP_STORE_CONNECT_KEY" | base64 --decode > $RUNNER_TEMP/app_store_connect_key/key.json
+        
+        # Set environment variable for the API key file path
+        echo "APP_STORE_CONNECT_KEY_PATH=$RUNNER_TEMP/app_store_connect_key/key.json" >> $GITHUB_ENV
+
+    - name: Install App Store Connect CLI
+      shell: bash
+      run: |
+        # Install the App Store Connect CLI using npm
+        npm install -g app-store-connect-cli 
+
+    - name: Publish to App Store Connect
+      shell: bash
+      env:
+        APP_ID: ${{ inputs.app-id }}
+        APP_VERSION: ${{ inputs.app-version }}
+        RELEASE_NOTES: ${{ inputs.release-notes }}
+      run: |
+        # Publish the app to App Store Connect using the CLI
+        app-store-connect upload \
+          --apiKeyPath $APP_STORE_CONNECT_KEY_PATH \
+          --appId $APP_ID \
+          --version $APP_VERSION \
+          ${ inputs.release-notes && "--release-notes " + inputs.release-notes || '' } \
+          ${ inputs.release-notes-file && "--release-notes-file " + inputs.release-notes-file || '' }

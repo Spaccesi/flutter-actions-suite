@@ -1,8 +1,23 @@
 name: Build ios app
-description: Build the iOS app using Flutter
+description: | 
+  Build the iOS app using Flutter. This action requires a base64 encoded iOS signing 
+  certificate (p12 file) to be provided as input, which will be used to sign the app during 
+  the build process. The action also supports various build options such as build mode, flavor, 
+  dart defines, obfuscation, and more. The built app will be signed with the provided certificate, 
+  allowing it to be installed on iOS devices or submitted to the App Store. 
+
+  IMPORTANT!: This action is intended for building iOS apps on a macOS runner, as it relies on 
+  Xcode and the Apple code signing tools. It will not work on non-macOS runners. 
+  Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
   ios-signing-certificate-base64:
     description: "Base64 encoded iOS signing certificate (p12 file)"
+    required: true
+  ios-signing-certificate-password:
+    description: "Password for the iOS signing certificate (p12 file)"
+    required: true
+  ios-provisioning-profile-base64:
+    description: "Base64 encoded iOS provisioning profile"
     required: true
   build-mode:
     description: "Build mode for the iOS app (debug, profile, release)"
@@ -38,13 +53,46 @@ inputs:
 runs:  
   using: "composite"
   steps:
-    - name: Download iOS signing certificate
-      id: ios_signing_certificate
-      uses: timheuer/base64-to-file@v1
-      with:
-        fileName: ios-signing-certificate.p12
-        encodedString: ${{ inputs.ios-signing-certificate-base64 }} 
-    
+    - name: Install Apple Certificate
+      shell: bash
+      if: ${{ inputs.code-sign == 'true' }}
+      env:
+        BUILD_CERTIFICATE_BASE64: ${{ inputs.ios-signing-certificate-base64 }}
+        P12_PASSWORD: ${{ inputs.ios-signing-certificate-password }}
+        KEYCHAIN_PASSWORD: "dist_password"
+      run: |
+        # create variables
+        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+        # import certificate and provisioning profile from secrets
+        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+        # create temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+        # import certificate to keychain
+        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+
+    - name: Install Provisioning Profile
+      shell: bash
+      if: ${{ inputs.code-sign == 'true' }}
+      env:
+        PROVISIONING_PROFILE_BASE64: ${{ inputs.ios-provisioning-profile-base64 }}
+      run: |
+        # create variables
+        PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+
+        # import provisioning profile from secrets
+        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+        # apply provisioning profile
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
     - name: Build iOS app
       shell: bash
       run: |

@@ -1,1 +1,51 @@
-# TODO
+name: Publish macOS App Store
+description: Publish the macOS app to the App Store using Flutter
+inputs:
+  apple-id:
+    description: "Apple ID email address (e.g. developer@apple.com)"
+  apple-password:
+    description: "Apple ID password (e.g. my-apple-password)"
+  app-name:
+    description: "The name of the app to publish (e.g. My App)"
+  app-version:
+    description: "The version of the app to publish (e.g. 1.0.0)"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Provisioning Profile
+      shell: bash
+      env:
+        PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+      run: |
+        # create variables
+        PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
+
+        # import provisioning profile from secrets
+        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+        # apply provisioning profile
+        mkdir -p ~/Library/ProvisioningProfiles
+        cp $PP_PATH ~/Library/ProvisioningProfiles
+        
+        # Extract UUID and copy with UUID name to ensure detection
+        UUID=`/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< $(security cms -D -i $PP_PATH)`
+        cp $PP_PATH ~/Library/ProvisioningProfiles/$UUID.provisionprofile
+        
+        echo "PP_PATH=$PP_PATH" >> $GITHUB_ENV
+        echo "profile_uuid=$UUID" >> $GITHUB_ENV
+
+    - name: Upload app to App Store Connect
+      shell: bash
+      env:
+        API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        API_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER }}
+        API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+      run: |
+        # Create private key file
+        mkdir -p ~/.appstoreconnect/private_keys
+        echo "$API_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_$API_KEY_ID.p8
+        
+        # Upload
+        # Note: altool uses --type osx for macOS apps
+        xcrun altool --upload-app --type osx --file build/macos/pkg/*.pkg --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
