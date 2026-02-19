@@ -65,11 +65,11 @@ inputs:
   
   # General Build step inputs
   build-platform:
-    description: 'A comma separated list of platforms to build and deploy. Available options: android, ios, web, windows, macos, linux, none. If not set, all platforms will be built and deployed.'
+    description: 'Platform to build and deploy. Available options: android, ios, web, windows, macos, linux, none.'
     required: false
     default: 'none'
   publish-destination:
-    description: 'Where to publish the built app. Available options: none, github-releases, store, . If set to github-releases, the app will be published to GitHub Releases using the provided GitHub token. If set to artifact, the app will be uploaded as an artifact of the workflow run. If set to none, the app will not be published.'
+    description: 'Where to publish the built app. Available options: none, github-releases, store, firebase-app-distribution, github-artifacts, github-pages, firebase-hosting.'
     required: false
     default: 'none'
   build-mode:
@@ -141,6 +141,81 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
+    # -- Check inputs -----------------------------------------------------
+    - name: Validate inputs
+      shell: bash
+      run: |
+        ERRORS=()
+
+        PLATFORM="${{ inputs.build-platform }}"
+        DESTINATION="${{ inputs.publish-destination }}"
+        BUILD_MODE="${{ inputs.build-mode }}"
+
+        # --- Firebase Hosting: only web is supported ---
+        if [ "$DESTINATION" = "firebase-hosting" ]; then
+          if [ "$PLATFORM" != "web" ]; then
+            ERRORS+=("Firebase Hosting only supports the 'web' platform. Got: '$PLATFORM'.")
+          fi
+          if [ -z "${{ inputs.firebase-service-account-base64 }}" ]; then
+            ERRORS+=("'firebase-service-account-base64' is required when publish-destination is 'firebase-hosting'.")
+          fi
+          if [ -z "${{ inputs.firebase-project-id }}" ]; then
+            ERRORS+=("'firebase-project-id' is required when publish-destination is 'firebase-hosting'.")
+          fi
+        fi
+
+        # --- Firebase App Distribution: web and linux are not supported ---
+        if [ "$DESTINATION" = "firebase-app-distribution" ]; then
+          if [ "$PLATFORM" != "android" ] && [ "$PLATFORM" != "ios" ]; then
+            ERRORS+=("Firebase App Distribution does not support the '$PLATFORM' platform.")
+          fi
+          if [ -z "${{ inputs.firebase-service-account-base64 }}" ]; then
+            ERRORS+=("'firebase-service-account-base64' is required when publish-destination is 'firebase-app-distribution'.")
+          fi
+        fi
+
+        # --- Android: signing inputs required for release and profile builds ---
+        if [ "$PLATFORM" = "android" ] && [ "$BUILD_MODE" != "debug" ]; then
+          if [ -z "${{ inputs.android-store-file-base64 }}" ]; then
+            ERRORS+=("'android-store-file-base64' is required when building Android in '$BUILD_MODE' mode.")
+          fi
+          if [ -z "${{ inputs.android-keystore-alias }}" ]; then
+            ERRORS+=("'android-keystore-alias' is required when building Android in '$BUILD_MODE' mode.")
+          fi
+          if [ -z "${{ inputs.android-keystore-password }}" ]; then
+            ERRORS+=("'android-keystore-password' is required when building Android in '$BUILD_MODE' mode.")
+          fi
+          if [ -z "${{ inputs.android-key-password }}" ]; then
+            ERRORS+=("'android-key-password' is required when building Android in '$BUILD_MODE' mode.")
+          fi
+        fi
+
+        # --- iOS: signing certificate required ---
+        if [ "$PLATFORM" = "ios" ]; then
+          if [ -z "${{ inputs.ios-signing-certificate-base64 }}" ]; then
+            ERRORS+=("'ios-signing-certificate-base64' is required when building for iOS.")
+          fi
+        fi
+
+        # --- License check: config path required ---
+        if [ "${{ inputs.run-license }}" = "true" ]; then
+          if [ -z "${{ inputs.compatible-licenses-conf-path }}" ]; then
+            ERRORS+=("'compatible-licenses-conf-path' is required when 'run-license' is true.")
+          fi
+        fi
+
+        # --- Report all errors ---
+        if [ ${#ERRORS[@]} -gt 0 ]; then
+          for ERROR in "${ERRORS[@]}"; do
+            echo "🚨 ::error:: $ERROR"
+          done
+          exit 1
+        fi
+
+        echo "✅ Input validation passed."
+
+    # -- Setup Flutter -----------------------------------------------------
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
@@ -148,6 +223,7 @@ runs:
         channel: ${{ inputs.flutter-channel }}
         cache: true
     
+    # -- Prepare -----------------------------------------------------
     - name: Prepare Repository
       uses: Spaccesi/flutter-actions-suite/prepare@main
       with:
@@ -155,6 +231,7 @@ runs:
         run-gen-l10n: ${{ inputs.run-gen-l10n }}
         gen-l10n-fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}
 
+    # -- Check -----------------------------------------------------
     - name: Run Checks
       uses: Spaccesi/flutter-actions-suite/check@main
       with:
@@ -167,6 +244,7 @@ runs:
         run-coverage: ${{ inputs.run-coverage }}
         create-coverage-badge: ${{ inputs.test-create-coverage-badge }}
 
+    # -- Build --------------------------------------------------------------
     - name: Build android
       if: contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/build/android@main
@@ -186,21 +264,22 @@ runs:
         obfuscate: ${{ inputs.obfuscate }}
         build-type: ${{ inputs.android-build-type }}
 
-    
-    # - name: Build iOS
-    #   if: contains(inputs.build-platform, 'ios')
-    #   uses: Spaccesi/flutter-actions-suite/build/ios@main
-    #   with:
-    #     ios-signing-certificate-base64: ${{ secrets.IOS_SIGNING_KEY_BASE64 }}
-    #     build-mode: ${{ inputs.build-mode }}
-    #     build-name: ${{ inputs.build-name }}
-    #     build-number: ${{ inputs.build-number }}
-    #     flavor: ${{ inputs.flavor }}
-    #     dart-define: ${{ inputs.dart-define }}
-    #     no-pub: 'true'
-    #     target: ${{ inputs.target }}
-    #     code-sign: ${{ inputs.code-sign }}
-    #     obfuscate: ${{ inputs.obfuscate }}
+    - name: Build iOS
+      if: contains(inputs.build-platform, 'ios')
+      uses: Spaccesi/flutter-actions-suite/build/ios@main
+      with:
+        ios-signing-certificate-base64: ${{ inputs.ios-signing-certificate-base64 }}
+        ios-provisioning-profile-base64: ${{ inputs.ios-provisioning-profile-base64 }}
+        ios-signing-certificate-password: ${{ inputs.ios-signing-certificate-password }}
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: 'true'
+        target: ${{ inputs.target }}
+        code-sign: ${{ inputs.code-sign }}
+        obfuscate: ${{ inputs.obfuscate }}
 
     - name: Build web
       if: contains(inputs.build-platform, 'web')
@@ -228,11 +307,19 @@ runs:
         target: ${{ inputs.target }}
         obfuscate: ${{ inputs.obfuscate }}
 
-    # - name: Build macos
-    #   if: contains(inputs.build-platform, 'macos')
-    #   uses: Spaccesi/flutter-actions-suite/build/macos@main 
-    #   with:
-    #     macos-signing-certificate-base64: ${{ secrets.MACOS_SIGNING_KEY_BASE64 }}
+    - name: Build macos
+      if: contains(inputs.build-platform, 'macos')
+      uses: Spaccesi/flutter-actions-suite/build/macos@main 
+      with:
+        macos-signing-certificate-base64: ${{ inputs.macos-signing-certificate-base64 }}
+        build-mode: ${{ inputs.build-mode }}
+        build-name: ${{ inputs.build-name }}
+        build-number: ${{ inputs.build-number }}
+        flavor: ${{ inputs.flavor }}
+        dart-define: ${{ inputs.dart-define }}
+        no-pub: 'true'
+        target: ${{ inputs.target }}
+        obfuscate: ${{ inputs.obfuscate }}
 
     - name: Build linux
       if: contains(inputs.build-platform, 'linux')
@@ -245,41 +332,119 @@ runs:
         no-pub: 'true'
         obfuscate: ${{ inputs.obfuscate }}
 
-    # - name: Publish to GitHub Releases
-    #   if: inputs.publish-destination == 'github-releases'
-    #   uses: Spaccesi/flutter-actions-suite/publish/github-releases@main
+    # -- Resolve build output path -------------------------------------------------
+    - name: Resolve build output path
+      id: resolve-output
+      shell: bash
+      run: |
+        PLATFORM="${{ inputs.build-platform }}"
+        MODE="${{ inputs.build-mode }}"
+        BUILD_TYPE="${{ inputs.android-build-type }}"
+        MODE_CAP="$(echo "${MODE:0:1}" | tr '[:lower:]' '[:upper:]')${MODE:1}"
 
-    # - name: Publish to Firebase App Distribution
-    #   if: inputs.publish-destination == 'app-distribution'
-    #   uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+        case "$PLATFORM" in
+          web)     OUTPUT="build/web" ;;
+          android)
+            if [ "$BUILD_TYPE" = "apk" ]; then
+              OUTPUT="build/app/outputs/flutter-apk"
+            else
+              OUTPUT="build/app/outputs/bundle/$MODE"
+            fi
+            ;;
+          ios)     OUTPUT="build/ios/iphoneos" ;;
+          windows) OUTPUT="build/windows/x64/runner/$MODE_CAP" ;;
+          macos)   OUTPUT="build/macos/Build/Products/$MODE_CAP" ;;
+          linux)   OUTPUT="build/linux/x64/$MODE/bundle" ;;
+          *)       OUTPUT="" ;;
+        esac
 
-    # - name: Publish to Firebase Hosting
-    #   if: inputs.publish-destination == 'hosting'
-    #   uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main  
+        echo "FLUTTER_BUILD_OUTPUT=$OUTPUT" >> $GITHUB_ENV
+        echo "Resolved build output path: $OUTPUT"
 
-    # - name: Upload as Artifact
-    #   if: inputs.publish-destination == 'artifact'
-    #   uses: actions/upload-artifact@v3
-     
-    # - name: Deploy to Play Store
-    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
-    #   uses: Spaccesi/flutter-actions-suite/publish/play-store@main
+    # -- Publish Github ------------------------------------------------------------
+    - name: Publish to GitHub Releases
+      if: inputs.publish-destination == 'github-releases'
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        
 
-    # - name: Deploy to ios App Store
-    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
-    #   uses: Spaccesi/flutter-actions-suite/publish/app-store@main
+    - name: Upload as Artifact
+      if: inputs.publish-destination == 'github-artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ env.OUTPUT }}
 
-    # - name: Deploy to Microsoft Store
-    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
-    #   uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
+    - name: Upload as Github Page
+      if: inputs.publish-destination == 'github-pages' && contains(inputs.build-platform, 'web')
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        publish_dir: ${{ env.OUTPUT }}
 
-    # - name: Deploy to Mac App Store
-    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
-    #   uses: Spaccesi/flutter-actions-suite/publish/mac-app-store@main 
+    # -- Publish to firebase ------------------------------------------------------------
+    - name: Publish iOS to Firebase App Distribution
+      if: inputs.publish-destination == 'firebase-app-distribution' && contains(inputs.build-platform, 'ios')
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+      with:
+        firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
+        app-id: ${{ inputs.firebase-app-distribution-app-id }}
+        groups: ${{ inputs.firebase-app-distribution-groups }}
+        release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
 
-    # - name: Deploy to Linux App Store
-    #   if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
-    #   uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
+    - name: Publish android to Firebase App Distribution
+      if: inputs.publish-destination == 'firebase-app-distribution' && contains(inputs.build-platform, 'android')
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+      with:
+        firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
+        app-id: ${{ inputs.firebase-app-distribution-app-id }}
+        groups: ${{ inputs.firebase-app-distribution-groups }}
+        release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
+
+    - name: Publish to Firebase Hosting
+      if: inputs.publish-destination == 'firebase-hosting' && contains(inputs.build-platform, 'web')
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main
+      with:
+        firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
+        target: ${{ inputs.firebase-hosting-target }}
+        project-id: ${{ inputs.firebase-project-id }}
+
+    # -- Publish to stores ------------------------------------------------------------
+    - name: Deploy to Play Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
+      uses: Spaccesi/flutter-actions-suite/publish/play-store@main
+      with:
+        package-name: ${{ inputs.play-store-package-name }}
+        track: ${{ inputs.play-store-track }}
+        service-account-json-base64: ${{ inputs.play-store-service-account-json-base64 }}
+        
+    - name: Deploy to ios App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
+      uses: Spaccesi/flutter-actions-suite/publish/ios-app-store@main
+      with:
+        app-id: ${{ inputs.app-store-app-id }}
+        app-store-connect-key: ${{ inputs.app-store-connect-key }}
+        app-version: ${{ inputs.app-store-app-version }}
+
+    - name: Deploy to Microsoft Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
+      uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
+
+    - name: Deploy to Mac App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
+      uses: Spaccesi/flutter-actions-suite/publish/macos-app-store@main 
+      with:
+        apple-id: ${{ inputs.macos-app-store-apple-id }}
+        apple-issuer-id: ${{ inputs.macos-app-store-apple-issuer-id }}
+        apple-key-content: ${{ inputs.macos-app-store-apple-key-content }}
+        macos-provisioning-profile-base64: ${{ inputs.macos-app-store-macos-provisioning-profile-base64 }}
+
+    - name: Deploy to Linux App Store
+      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
+      uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
+      with:
+        snap-store-token: ${{ inputs.snap-store-token }}
     
 
 

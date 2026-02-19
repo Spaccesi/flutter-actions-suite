@@ -2,22 +2,58 @@
 
 This GitHub Action prepares, checks, builds and deploys Flutter applications for iOS, Android, Web, macOS, Windows, and Linux. It supports modular builds via boolean flags and deployment to App Store Connect, Firebase App Distribution, Firebase Hosting, Play Store, Microsoft Store, and Snap Store.
 
-
 ## Features
 
 - **Multi-Platform**: Support for iOS, Android, Web, and Desktop (macOS, Windows, Linux).
 - **Modular Architecture**: Use the full pipeline or individual actions independently.
 - **Pre-build hooks**: Automatic `build_runner` and `gen-l10n` code generation.
 - **Signing**: Automated signing setup for iOS and Android.
-- **Testing**: Run tests with coverage reports, deployable to GitHub Pages or as artifacts.
+- **Testing**: Run tests with coverage reports.
 - **Documentation**: Generate project documentation with `dartdoc`.
 - **Deployment**:
     - iOS: App Store Connect, Firebase App Distribution.
-    - Android: Firebase App Distribution.
-    - Web: Firebase Hosting.
-    - macOS: App Store Connect
-    - Linux: Snap
-    - Windows: Windows Store
+    - Android: Play Store, Firebase App Distribution.
+    - Web: Firebase Hosting, Github Pages.
+    - macOS: App Store Connect.
+    - Linux: Snap Store.
+    - Windows: Windows Store.
+
+# Usage
+
+You have two options: use the [main action](/action.yml) to manage the full build and deployment of a Flutter project on a single platform, or use actions modularly to create your own flow. The [Examples](/examples/) folder is a good starting point — you may find what you are looking for there.
+
+## Main action
+
+
+
+## Modular Actions
+
+Each step of the pipeline is available as an independent action. This gives you full control over your CI/CD pipeline.
+
+| Action | Path | Description |
+| --- | --- | --- |
+| **Check** | [`/check`](./check) | Composite action for analysis, licenses, and tests. |
+| **Analyze** | [`/check/analyze`](./check/analyze) | Run static analysis and formatting checks. |
+| **Test** | [`/check/test`](./check/test) | Run tests with optional coverage reports. |
+| **License** | [`/check/license`](./check/license) | Check compatibility of dependency licenses. |
+| **Prepare** | [`/prepare`](./prepare) | Composite action for environment setup and code generation. |
+| **Build Runner** | [`/prepare/build_runner`](./prepare/build_runner) | Run `build_runner` across the repository. |
+| **Gen L10n** | [`/prepare/gen-l10n`](./prepare/gen-l10n) | Run `gen-l10n` localization across the repository. |
+| **Docs** | [`/docs`](./docs) | Generate project documentation with `dartdoc`. |
+| **Build** | [`/build/{platform}`](./build) | Build project (ios/android/web/macos/windows/linux). |
+| **Publish** | [`/publish/{platform}`](./publish) | TODO |
+
+You can use sub-actions to have more granular control:
+
+```yaml
+- name: Code Generation
+  uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main
+
+- name: Run Tests
+  uses: Spaccesi/flutter-actions-suite/check/test@main
+  with:
+    run-coverage: 'true'
+```
 
 ## Parallel multi-platform CI with jobs
 
@@ -42,38 +78,10 @@ This pattern avoids redundant code-generation on every runner, keeps total wall-
 
 See [examples/flutter_ci_jobs.yml](./examples/flutter_ci_jobs.yml) for the full workflow.
 
-## Modular Actions
+## Flutter version and workspaces
 
-Each step of the pipeline is available as an independent action. This gives you full control over your CI/CD pipeline.
-
-| Action | Path | Description |
-| --- | --- | --- |
-| **Check** | [`/check`](./check) | Composite action for analysis, licenses, and tests. |
-| **Analyze** | [`/check/analyze`](./check/analyze) | Run static analysis and formatting checks. |
-| **Test** | [`/check/test`](./check/test) | Run tests with optional coverage reports. |
-| **License** | [`/check/license`](./check/license) | Check compatibility of dependency licenses. |
-| **Prepare** | [`/prepare`](./prepare) | Composite action for environment setup and code generation. |
-| **Build Runner** | [`/prepare/build_runner`](./prepare/build_runner) | Run `build_runner` across the repository. |
-| **Gen L10n** | [`/prepare/gen-l10n`](./prepare/gen-l10n) | Run `gen-l10n` localization across the repository. |
-| **Docs** | [`/docs`](./docs) | Generate project documentation with `dartdoc`. |
-| **Build** | `/build/{platform}` | Build project (ios/android/web/macos/windows/linux). |
-| **Publish** | `/publish/{platform}` | TODO |
-
-## Usage
-
-### Using Individual Actions
-
-You can use sub-actions to have more granular control:
-
-```yaml
-- name: Code Generation
-  uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main
-
-- name: Run Tests
-  uses: Spaccesi/flutter-actions-suite/check/test@main
-  with:
-    run-coverage: 'true'
-```
+This action is primarily tested with the latest Flutter versions and is not tested with older versions of Flutter.
+In particular, for monorepos, this package relies on workspaces to work correctly. Other implementations are not supported at the moment.
 
 ## Notes
 
