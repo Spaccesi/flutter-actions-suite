@@ -1,0 +1,34 @@
+name: Take information from the changelog and create a release note
+description: |
+  This action takes the information from the changelog and creates a release note. It can
+  also create a release on GitHub and upload the release note as an artifact.
+inputs:
+  changelog-path:
+    description: 'The path to the changelog file. This should be a relative path from the root of the repository.'
+    required: false
+    default: 'CHANGELOG.md'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create release note from changelog
+      id: create_release_note
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.changelog-path }}" ]; then
+          echo "🚨 Changelog file not found at path: ${{ inputs.changelog-path }}"
+          exit 1
+        fi
+
+        # Extract the latest release note from the changelog
+        RELEASE_NOTE=$(awk '/^## /{flag=1; next} /^## /{flag=0} flag' "${{ inputs.changelog-path }}" | sed '$d')
+        if [ -z "$RELEASE_NOTE" ]; then
+            echo "🚨 No release note found in the changelog."
+            exit 1
+        fi
+
+        echo "Release note extracted from changelog:"
+        echo "$RELEASE_NOTE"
+
+        # Set the release note as an output variable
+        echo "::set-output name=release_note::$RELEASE_NOTE"
