@@ -34,8 +34,7 @@ This composite action calls the following sub-actions:
 | `license-fails-on-warnings` | Fail if license warnings found. | No | `false` |
 | `license-fails-on-info` | Fail if license info found. | No | `false` |
 | `run-coverage` | Collect test coverage. | No | `false` |
-| `deploy-report` | Options: `none`, `github-pages`, `artifact`. | No | `none` |
-| `github-token` | Token for GitHub Pages. | No | `''` |
+| `no-pub` | Install dependecies or not. | No | `true` |
 
 > **Note**: For all inputs related to tests (dart-define, flavor, concurrency, timeout, ignore-timeouts), see the [Test Sub-Action README](./test/README.md).
 

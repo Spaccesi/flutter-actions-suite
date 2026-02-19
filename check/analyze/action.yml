@@ -1,11 +1,11 @@
 name: 'Flutter Analyze'
 description: 'Runs Flutter analysis and formatting checks.'
 inputs:
-  treat-infos-as-fatal:
+  analyze-fails-if-infos:
     description: 'Whether to treat info level issues as fatal.'
     required: false
     default: 'true'
-  treat-warnings-as-fatal:
+  analyze-fails-if-warnings:
     description: 'Whether to treat warning level issues as fatal.'
     required: false
     default: 'true'

@@ -15,14 +15,14 @@ runs:
     - name: Check licenses
       shell: bash
       run: |
-        # Run license check and capture output
+        # ℹ️ Run license check and capture output
         OUTPUT=$(lic_ck check-licenses -c ${{ inputs.compatible-licenses-conf-path }} -i -a)
         
-        # Check if output doesnt contains "No package licenses need approval!"
+        # ℹ️ Check if output doesnt contains "No package licenses need approval!"
         if ! echo "$OUTPUT" | grep -q "No package licenses need approval!"; then
-          echo "::error::Found incompatible licenses."
+          echo "🚨 Found incompatible licenses."
           echo "$OUTPUT"
           exit 1
         fi
 
-        echo "All licenses are compatible."
+        echo "✅ All licenses are compatible."

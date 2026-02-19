@@ -1,16 +1,9 @@
 name: Check Flutter project
 description: 'Runs a series of checks on the Flutter project, including static analysis, license compatibility, unit tests and widget tests.'
 inputs:
+  # Analyze options
   run-analyze:
     description: 'Whether to run flutter analyze. If false, the analyze step will be skipped.'
-    required: false
-    default: 'true'
-  run-license:
-    description: 'Whether to run license check. If false, the license check step will be skipped.'
-    required: false
-    default: 'true'
-  run-test:
-    description: 'Whether to run flutter test. If false, the test step will be skipped.'
     required: false
     default: 'true'
   analyze-fails-if-infos:
@@ -21,9 +14,21 @@ inputs:
     description: 'Whether to fail the analyze step if warning level issues are found.'
     required: false
     default: 'true'
+
+  # License check options
+  run-license:
+    description: 'Whether to run license check. If false, the license check step will be skipped.'
+    required: false
+    default: 'true'
   compatible-licenses-conf-path:
     description: 'Path to a file containing a list of compatible licenses for the license check step.'
-    required: true 
+    required: true
+
+  # Test options
+  run-test:
+    description: 'Whether to run flutter test. If false, the test step will be skipped.'
+    required: false
+    default: 'true'
   dart-define:
     description: 'Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.'
     required: false
@@ -56,8 +61,11 @@ inputs:
     description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
     default: 'false'
+  no-pub:
+    description: 'Whether to skip running pub get before running tests. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
+    required: false
+    default: 'true'
   
-
 runs:
   using: 'composite'
   steps:
@@ -65,8 +73,8 @@ runs:
       if: ${{ inputs.run-analyze == 'true' }}
       uses: Spaccesi/flutter-actions-suite/check/analyze@main
       with:
-        treat-infos-as-fatal: ${{ inputs.analyze-fails-if-infos }}
-        treat-warnings-as-fatal: ${{ inputs.analyze-fails-if-warnings }}
+        analyze-fails-if-infos: ${{ inputs.analyze-fails-if-infos }}
+        analyze-fails-if-warnings: ${{ inputs.analyze-fails-if-warnings }}
 
     - name: Check Licenses
       if: ${{ inputs.run-license == 'true' }}
@@ -86,4 +94,5 @@ runs:
         ignore-timeouts: ${{ inputs.ignore-timeouts }}
         run-coverage: ${{ inputs.run-coverage }}
         create-coverage-badge: ${{ inputs.create-coverage-badge }}
+        no-pub: ${{ inputs.no-pub }}
         

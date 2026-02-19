@@ -33,6 +33,10 @@ inputs:
     description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
     default: 'false'
+  no-pub:
+    description: 'Whether to skip running pub get before running tests. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
+    required: false
+    default: 'true'
     
 runs:
   using: 'composite'
@@ -43,8 +47,8 @@ runs:
       run: |
         flutter test . \
           -r github \
-          --no-pub \
           --concurrency=${{ inputs.concurrency }} \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
@@ -58,8 +62,8 @@ runs:
       run: |
         flutter test . \
           -r github \
-          --no-pub \
           --coverage \
+          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           --concurrency=${{ inputs.concurrency }} \
           ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
