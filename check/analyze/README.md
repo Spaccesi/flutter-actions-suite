@@ -8,8 +8,8 @@ Runs `flutter analyze` and formatting checks with configurable severity levels.
 - name: Analyze
   uses: Spaccesi/flutter-actions-suite/check/analyze@main
   with:
-    treat-infos-as-fatal: true
-    treat-warnings-as-fatal: true
+    analyze-fails-if-warnings: true
+    analyze-fails-if-infos: true
     no-pub: true
 ```
 

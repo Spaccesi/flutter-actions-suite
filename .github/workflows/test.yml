@@ -48,8 +48,8 @@ jobs:
         uses: ./check/analyze
         with:
           # Relax severity so a stock generated app doesn't fail
-          treat-infos-as-fatal: 'false'
-          treat-warnings-as-fatal: 'false'
+          analyze-fails-if-infos: 'false'
+          analyze-fails-if-warnings: 'false'
           no-pub: 'true'
 
   # ── check/license ──────────────────────────────────────────────────────────
