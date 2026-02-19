@@ -3,12 +3,16 @@ description: Publish the macOS app to the App Store using Flutter
 inputs:
   apple-id:
     description: "Apple ID email address (e.g. developer@apple.com)"
-  apple-password:
-    description: "Apple ID password (e.g. my-apple-password)"
-  app-name:
-    description: "The name of the app to publish (e.g. My App)"
-  app-version:
-    description: "The version of the app to publish (e.g. 1.0.0)"
+    required: true
+  apple-issuer-id:
+    description: "Apple API issuer ID (UUID format)"
+    required: true
+  apple-key-content:
+    description: "Base64 encoded content of the Apple API private key (.p8 file)"
+    required: true
+  macos-provisioning-profile-base64:
+    description: "Base64 encoded content of the macOS provisioning profile (.provisionprofile file)"
+    required: true
 
 runs:
   using: 'composite'
@@ -16,7 +20,7 @@ runs:
     - name: Install Provisioning Profile
       shell: bash
       env:
-        PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+        PROVISIONING_PROFILE_BASE64: ${{ inputs.macos-provisioning-profile-base64 }}
       run: |
         # create variables
         PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
@@ -38,9 +42,9 @@ runs:
     - name: Upload app to App Store Connect
       shell: bash
       env:
-        API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        API_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER }}
-        API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        API_KEY_ID: ${{ inputs.apple-id }}
+        API_ISSUER_ID: ${{ inputs.apple-issuer-id }}
+        API_KEY_CONTENT: ${{ inputs.apple-key-content }}
       run: |
         # Create private key file
         mkdir -p ~/.appstoreconnect/private_keys

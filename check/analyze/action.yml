@@ -20,7 +20,7 @@ runs:
     - name: Run Analysis
       run: |
         flutter analyze . \
-          ${{ inputs.treat-infos-as-fatal == 'false' && '--no-fatal-infos' || '' }} \
-          ${{ inputs.treat-warnings-as-fatal == 'false' && '--no-fatal-warnings' || '' }} \
+          ${{ inputs.analyze-fails-if-infos == 'false' && '--no-fatal-infos' || '' }} \
+          ${{ inputs.analyze-fails-if-warnings == 'false' && '--no-fatal-warnings' || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }}
       shell: bash

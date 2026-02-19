@@ -52,6 +52,26 @@ jobs:
           treat-warnings-as-fatal: 'false'
           no-pub: 'true'
 
+  # ── check/license ──────────────────────────────────────────────────────────
+  test-license:
+    name: Test check/license
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap Flutter test project
+        run: |
+          flutter create /tmp/test_app --project-name test_app --org com.example
+          cp -r /tmp/test_app/. .
+          flutter pub get
+      - name: Run check/license
+        uses: ./check/license
+        with:
+          compatible-licenses-conf-path: .github/license_config_example.yml
+
   # ── check/test ─────────────────────────────────────────────────────────────
   test-flutter-test:
     name: Test check/test
@@ -129,10 +149,7 @@ jobs:
       - name: Run build/windows
         uses: ./build/windows
 
-  # ── build/android ──────────────────────────────────────────────────────────
-  # Requires secrets: ANDROID_KEYSTORE_BASE64, ANDROID_STORE_PASSWORD,
-  #                   ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS,
-  #                   ANDROID_LOCAL_PROPERTIES
+  # ── build/android ─────────────────────────────────────────────────────────
   test-build-android:
     name: Test build/android
     runs-on: ubuntu-latest
@@ -150,7 +167,7 @@ jobs:
       - name: Run build/android
         uses: ./build/android
         with:
-          android-keystore-base64: ''
+          android-store-file-base64: ''
           android-store-password: ''
           android-key-password: ''
           android-key-alias: ''
@@ -158,7 +175,6 @@ jobs:
           build-mode: 'debug' # Avoid long release build for testing
 
   # ── build/macos ────────────────────────────────────────────────────────────
-  # Requires secret: MACOS_SIGNING_CERTIFICATE_BASE64
   test-build-macos:
     name: Test build/macos
     runs-on: macos-latest
@@ -199,5 +215,7 @@ jobs:
         uses: ./build/ios
         with:
           ios-signing-certificate-base64: ''
+          ios-provisioning-profile-base64: ''
+          ios-signing-certificate-password: ''
           build-mode: 'debug' # Avoid long release build for testing
           code-sign: 'false' # Avoid code signing for testing

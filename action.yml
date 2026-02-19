@@ -116,7 +116,7 @@ inputs:
     required: false
 
   # Android Build & Publish step inputs
-  android-keystore-base64:
+  android-store-file-base64:
     description: 'Base64 encoded JKS or PKCS12 file containing the Android signing keystore. Required for building and signing Android apps.'
     required: false
   android-keystore-alias:
@@ -242,7 +242,6 @@ runs:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
-        flavor: ${{ inputs.flavor }}
         dart-defines: ${{ inputs.dart-define }}
         no-pub: 'true'
         obfuscate: ${{ inputs.obfuscate }}

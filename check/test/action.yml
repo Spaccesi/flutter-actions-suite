@@ -37,6 +37,10 @@ inputs:
     description: 'Whether to skip running pub get before running tests. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
     required: false
     default: 'true'
+  coverage-badge-output-path:
+    description: 'The path where the coverage badge will be created. This input is only used if create-coverage-badge is set to true. The default value is "coverage/html" in the root of the repository.'
+    required: false
+    default: 'coverage/html'
     
 runs:
   using: 'composite'
@@ -67,7 +71,7 @@ runs:
           --concurrency=${{ inputs.concurrency }} \
           ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
-          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
+          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
           ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
           ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
           
@@ -83,4 +87,4 @@ runs:
       shell: bash
       if: inputs.create-coverage-badge == 'true'
       run: |
-        genhtml coverage/lcov.info -o coverage/html
+        genhtml coverage/lcov.info -o ${{ inputs.coverage-badge-output-path }}

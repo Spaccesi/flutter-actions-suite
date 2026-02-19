@@ -1,0 +1,20 @@
+# This is an example configuration file for the license checking workflow.
+# It specifies the permitted and rejected licenses for the dependencies of the project.
+# It also specifies any approved packages that are allowed to have no license file.
+# More information about the license checking workflow can be found in the documentation:
+# https://pub.dev/packages/license_checker
+
+
+permittedLicenses:
+  - MIT
+  - BSD-3-Clause
+  - Apache-2.0
+  - MIT-Modern-Variant
+  - Zlib
+
+approvedPackages:
+  no-file:
+    - flutter_test
+
+rejectedLicenses:
+  - GPL

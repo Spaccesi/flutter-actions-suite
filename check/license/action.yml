@@ -1,5 +1,13 @@
 name: Check license
-description: Check that all dependencies licenses are compatible with the project. https://pub.dev/packages/license_checker is used to check the licenses of the dependencies. The action can be configured to fail if incompatible licenses are found or to just print a warning. A file containing a list of compatible licenses can also be provided.
+description: |
+  Check that all dependencies licenses are compatible with the project. 
+  https://pub.dev/packages/license_checker is used to check the licenses 
+  of the dependencies. The action can be configured to fail if incompatible 
+  licenses are found or to just print a warning. A file containing a list 
+  of compatible licenses can also be provided.
+
+  The action is intended to be used in a CI workflow to ensure that all 
+  dependencies have compatible licenses before merging code or releasing a new version of the app.
 inputs:
   compatible-licenses-conf-path:
     description: 'Path to a file containing a list of compatible licenses.'

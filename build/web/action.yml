@@ -44,10 +44,6 @@ inputs:
     description: "Used when serving the static assets from a different domain the application is hosted on. The value has to end with a slash '/'. When this is set, it will replace all $FLUTTER_STATIC_ASSETS_URL in web/index.html for the given value."
     required: false
     default: ''
-  pwa-strategy:
-    description: "The caching strategy to be used by the PWA service worker (default: offline-first, options: offline-first, none)"
-    required: false
-    default: "offline-first"
   wasm:
     description: "Whether to build the web app with WebAssembly (default: false). See https://flutter.dev/to/wasm for more information."
     required: false
@@ -68,6 +64,5 @@ runs:
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.base-href != '' && format('--base-href={0}', inputs.base-href) || '' }} \
           ${{ inputs.static-assets-url != '' && format('--static-assets-url={0}', inputs.static-assets-url) || '' }} \
-          --pwa-strategy=${{ inputs.pwa-strategy }} \
           ${{ inputs.wasm == 'true' && '--wasm' || '' }} \
           --output=${{ inputs.output || 'build/web' }}
