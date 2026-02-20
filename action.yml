@@ -65,13 +65,11 @@ inputs:
   
   # General Build step inputs
   build-platform:
-    description: 'Platform to build and deploy. Available options: android, ios, web, windows, macos, linux, none.'
-    required: false
-    default: 'none'
+    description: 'List of platform to build. Be aware some platform builds need to be run on specific OS. Available options: android, ios, web, windows, macos, linux, none.'
+    required: true
   publish-destination:
-    description: 'Where to publish the built app. Available options: none, github-releases, store, firebase-app-distribution, github-artifacts, github-pages, firebase-hosting.'
-    required: false
-    default: 'none'
+    description: 'List of platforms where to publish the built app. Be aware build needs to be run first and that not every destination is available for every platfomr. Available options: none, github-releases, store, firebase-app-distribution, github-artifacts, github-pages, firebase-hosting.'
+    required: true
   build-mode:
     description: 'The build mode to use. Available options: debug, profile, release.'
     required: false
@@ -88,8 +86,6 @@ inputs:
   dart-define:
     description: 'Additional Dart define variables to pass to the Flutter build command. This should be a comma separated list of key=value pairs.'
     required: false
-  
-
 
   # iOS Build & Publish step inputs
   ios-signing-certificate-base64:
@@ -115,7 +111,7 @@ inputs:
     description: 'Firebase project ID to publish to. Required for publishing to Firebase Hosting.'
     required: false
 
-  # Android Build & Publish step inputs
+  # Android Build step inputs
   android-store-file-base64:
     description: 'Base64 encoded JKS or PKCS12 file containing the Android signing keystore. Required for building and signing Android apps.'
     required: false
@@ -136,8 +132,6 @@ inputs:
     description: 'Path to a local.properties file containing the path to the Android SDK. This is required if the Android SDK is not available in the default location on the runner.'
     required: false
   
-
- 
 runs:
   using: 'composite'
   steps:
@@ -346,12 +340,12 @@ runs:
           web)     OUTPUT="build/web" ;;
           android)
             if [ "$BUILD_TYPE" = "apk" ]; then
-              OUTPUT="build/app/outputs/flutter-apk"
+              OUTPUT="build/app/outputs/apk/$MODE/*.apk"
             else
-              OUTPUT="build/app/outputs/bundle/$MODE"
+              OUTPUT="build/app/outputs/bundle/$MODE/*.aab"
             fi
             ;;
-          ios)     OUTPUT="build/ios/iphoneos" ;;
+          ios)     OUTPUT="build/ios/iphoneos/*.ipa" ;;
           windows) OUTPUT="build/windows/x64/runner/$MODE_CAP" ;;
           macos)   OUTPUT="build/macos/Build/Products/$MODE_CAP" ;;
           linux)   OUTPUT="build/linux/x64/$MODE/bundle" ;;
@@ -363,7 +357,7 @@ runs:
 
     # -- Publish Github ------------------------------------------------------------
     - name: Publish to GitHub Releases
-      if: inputs.publish-destination == 'github-releases'
+      if: contains(inputs.publish-destination, 'github-releases')
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
@@ -371,48 +365,51 @@ runs:
         
 
     - name: Upload as Artifact
-      if: inputs.publish-destination == 'github-artifact'
+      if: contains(inputs.publish-destination, 'github-artifact')
       uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.artifact-name }}
-        path: ${{ env.OUTPUT }}
+        path: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
     - name: Upload as Github Page
-      if: inputs.publish-destination == 'github-pages' && contains(inputs.build-platform, 'web')
+      if: contains(inputs.publish-destination, 'github-pages') && contains(inputs.build-platform, 'web')
       uses: peaceiris/actions-gh-pages@v4
       with:
-        publish_dir: ${{ env.OUTPUT }}
+        publish_dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
     # -- Publish to firebase ------------------------------------------------------------
     - name: Publish iOS to Firebase App Distribution
-      if: inputs.publish-destination == 'firebase-app-distribution' && contains(inputs.build-platform, 'ios')
+      if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
       with:
+        release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
         app-id: ${{ inputs.firebase-app-distribution-app-id }}
         groups: ${{ inputs.firebase-app-distribution-groups }}
         release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
 
     - name: Publish android to Firebase App Distribution
-      if: inputs.publish-destination == 'firebase-app-distribution' && contains(inputs.build-platform, 'android')
+      if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
       with:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
+        release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
         app-id: ${{ inputs.firebase-app-distribution-app-id }}
         groups: ${{ inputs.firebase-app-distribution-groups }}
         release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
 
     - name: Publish to Firebase Hosting
-      if: inputs.publish-destination == 'firebase-hosting' && contains(inputs.build-platform, 'web')
+      if: contains(inputs.publish-destination, 'firebase-hosting') && contains(inputs.build-platform, 'web')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main
       with:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
         target: ${{ inputs.firebase-hosting-target }}
         project-id: ${{ inputs.firebase-project-id }}
+        public-dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
     # -- Publish to stores ------------------------------------------------------------
     - name: Deploy to Play Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'android')
+      if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/publish/play-store@main
       with:
         package-name: ${{ inputs.play-store-package-name }}
@@ -420,7 +417,7 @@ runs:
         service-account-json-base64: ${{ inputs.play-store-service-account-json-base64 }}
         
     - name: Deploy to ios App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'ios')
+      if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/publish/ios-app-store@main
       with:
         app-id: ${{ inputs.app-store-app-id }}
@@ -428,11 +425,11 @@ runs:
         app-version: ${{ inputs.app-store-app-version }}
 
     - name: Deploy to Microsoft Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'windows')
+      if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'windows')
       uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
 
     - name: Deploy to Mac App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'macos')
+      if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'macos')
       uses: Spaccesi/flutter-actions-suite/publish/macos-app-store@main 
       with:
         apple-id: ${{ inputs.macos-app-store-apple-id }}
@@ -441,7 +438,7 @@ runs:
         macos-provisioning-profile-base64: ${{ inputs.macos-app-store-macos-provisioning-profile-base64 }}
 
     - name: Deploy to Linux App Store
-      if: inputs.publish-destination == 'store' && contains(inputs.build-platform, 'linux')
+      if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'linux')
       uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
       with:
         snap-store-token: ${{ inputs.snap-store-token }}
