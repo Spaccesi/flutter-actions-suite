@@ -372,7 +372,7 @@ runs:
 
     - name: Upload as Artifact
       if: inputs.publish-destination == 'github-artifact'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ env.OUTPUT }}
