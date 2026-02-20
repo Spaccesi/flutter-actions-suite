@@ -113,6 +113,11 @@ inputs:
     description: 'Target to publish to. Required for publishing to Firebase Hosting.'
     required: false
 
+  # Github pages
+  github-token:
+    description: 'Github token'
+    required: false
+
   # Android Build step inputs
   android-store-file-base64:
     description: 'Base64 encoded JKS or PKCS12 file containing the Android signing keystore. Required for building and signing Android apps.'
@@ -388,7 +393,7 @@ runs:
       uses: peaceiris/actions-gh-pages@v4
       with:
         publish_dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.github-token }}
 
     # -- Publish to firebase ------------------------------------------------------------
     - name: Publish iOS to Firebase App Distribution
@@ -418,7 +423,6 @@ runs:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
         target: ${{ inputs.firebase-hosting-target }}
         project-id: ${{ inputs.firebase-project-id }}
-        public-dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
     # -- Publish to stores ------------------------------------------------------------
     - name: Deploy to Play Store
