@@ -152,7 +152,7 @@ runs:
           if [ "$PLATFORM" != "web" ]; then
             ERRORS+=("Firebase Hosting only supports the 'web' platform. Got: '$PLATFORM'.")
           fi
-          if [ "${{ inputs.firebase-project-id }}" != "" ]; then
+          if [ "${{ inputs.firebase-project-id }}" == "" ]; then
             ERRORS+=("'firebase-project-id' is required when publish-destination is 'firebase-hosting'.")
           fi
         fi
