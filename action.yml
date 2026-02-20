@@ -19,11 +19,11 @@ inputs:
   run-build-runner:
     description: 'Whether to run build_runner for code generation. This will run build_runner for all packages in the repository that have a build.yaml file.'
     required: false
-    default: 'false'
+    default: 'true'
   run-gen-l10n:
     description: 'Whether to run gen-l10n for code generation. This will run gen-l10n for all packages in the repository that have a l10n.yaml or l10n.yml file.'
     required: false
-    default: 'false'
+    default: 'true'
   gen-l10n-fails-if-untranslated:
     description: 'Whether to fail the gen-l10n step if untranslated strings are found. This will check for the presence of an untranslated-messages-file in the l10n configuration file and fail if the file is generated and contains untranslated strings.'
     required: false
