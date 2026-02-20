@@ -7,6 +7,10 @@ inputs:
     description: 'The path to the changelog file. This should be a relative path from the root of the repository.'
     required: false
     default: 'CHANGELOG.md'
+  fails-on-missing-changelog:
+    description: 'Whether the action should fail if the changelog file is missing.'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -17,14 +21,18 @@ runs:
       run: |
         if [ ! -f "${{ inputs.changelog-path }}" ]; then
           echo "🚨 Changelog file not found at path: ${{ inputs.changelog-path }}"
-          exit 1
+          if [[ "${{ inputs.fails-on-missing-changelog }}" == "true" ]]; then
+            exit 1
+          fi
         fi
 
         # Extract the latest release note from the changelog
         RELEASE_NOTE=$(awk '/^## /{flag=1; next} /^## /{flag=0} flag' "${{ inputs.changelog-path }}" | sed '$d')
         if [ -z "$RELEASE_NOTE" ]; then
-            echo "🚨 No release note found in the changelog."
+          echo "🚨 No release note found in the changelog."
+          if [[ "${{ inputs.fails-on-missing-changelog }}" == "true" ]]; then
             exit 1
+          fi
         fi
 
         echo "Release note extracted from changelog:"
