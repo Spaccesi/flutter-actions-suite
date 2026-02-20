@@ -152,10 +152,10 @@ runs:
           if [ "$PLATFORM" != "web" ]; then
             ERRORS+=("Firebase Hosting only supports the 'web' platform. Got: '$PLATFORM'.")
           fi
-          if [ -z "${{ inputs.firebase-service-account-base64 }}" ]; then
+          if ["${{ inputs.firebase-service-account-base64 }}" != "" ]; then
             ERRORS+=("'firebase-service-account-base64' is required when publish-destination is 'firebase-hosting'.")
           fi
-          if [ -z "${{ inputs.firebase-project-id }}" ]; then
+          if [ "${{ inputs.firebase-project-id }}" != "" ]; then
             ERRORS+=("'firebase-project-id' is required when publish-destination is 'firebase-hosting'.")
           fi
         fi
@@ -198,6 +198,21 @@ runs:
           if [ -z "${{ inputs.compatible-licenses-conf-path }}" ]; then
             ERRORS+=("'compatible-licenses-conf-path' is required when 'run-license' is true.")
           fi
+        fi
+
+        # --- Runner OS compatibility ---
+        RUNNER_OS="${{ runner.os }}"
+        if [[ "$PLATFORM" == *"ios"* ]] && [ "$RUNNER_OS" != "macOS" ]; then
+          ERRORS+=("Building for 'ios' requires a macOS runner. Current runner OS: '$RUNNER_OS'.")
+        fi
+        if [[ "$PLATFORM" == *"macos"* ]] && [ "$RUNNER_OS" != "macOS" ]; then
+          ERRORS+=("Building for 'macos' requires a macOS runner. Current runner OS: '$RUNNER_OS'.")
+        fi
+        if [[ "$PLATFORM" == *"windows"* ]] && [ "$RUNNER_OS" != "Windows" ]; then
+          ERRORS+=("Building for 'windows' requires a Windows runner. Current runner OS: '$RUNNER_OS'.")
+        fi
+        if [[ "$PLATFORM" == *"linux"* ]] && [ "$RUNNER_OS" != "Linux" ]; then
+          ERRORS+=("Building for 'linux' requires a Linux runner. Current runner OS: '$RUNNER_OS'.")
         fi
 
         # --- Report all errors ---
