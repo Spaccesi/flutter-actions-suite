@@ -376,6 +376,7 @@ runs:
       uses: peaceiris/actions-gh-pages@v4
       with:
         publish_dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     # -- Publish to firebase ------------------------------------------------------------
     - name: Publish iOS to Firebase App Distribution
