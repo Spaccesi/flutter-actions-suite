@@ -4,13 +4,12 @@ This GitHub Action prepares, checks, builds and deploys Flutter applications for
 
 ## Features
 
-- **Multi-Platform**: Support for iOS, Android, Web, and Desktop (macOS, Windows, Linux).
 - **Modular Architecture**: Use the full pipeline or individual actions independently.
 - **Pre-build hooks**: Automatic `build_runner` and `gen-l10n` code generation.
-- **Signing**: Automated signing setup for iOS and Android.
-- **Testing**: Run tests with coverage reports.
+- **Checks and Testing**: Run checks and tests with coverage reports.
 - **Documentation**: Generate project documentation with `dartdoc`.
-- **Deployment**:
+- **Build & Signing**: Automated signing setup for iOS and Android and support for iOS, Android, Web, macOS, Windows, and Linux builds.
+- **Publish**:
     - iOS: App Store Connect, Firebase App Distribution.
     - Android: Play Store, Firebase App Distribution.
     - Web: Firebase Hosting, Github Pages.
@@ -24,7 +23,25 @@ You have two options: use the [main action](/action.yml) to manage the full buil
 
 ## Main action
 
+The main action (action.yml) is a single-entry-point GitHub Action that manages the full CI/CD pipeline for a Flutter application on a chosen platform. It orchestrates four sequential stages:
+1. Prepare
+Sets up the Flutter environment, runs flutter pub get, and optionally executes code generation steps — build_runner (for generated Dart code) and gen-l10n (for localization files) — so the app is fully ready to build.
+2. Check (Test & Analyze)
+Runs static analysis, formatting checks, dependency license validation, and unit/widget tests — optionally with coverage reports. This acts as a quality gate before any build artifact is produced.
+3. Build
+Compiles the Flutter app for the target platform. Supported platforms are iOS, Android, Web, macOS, Windows, and Linux. Platform-specific signing is handled automatically for iOS (certificates/provisioning profiles) and Android (keystore).
+4. Publish
+Deploys the built artifact to one or more distribution destinations based on boolean flags provided as inputs. Supported destinations are:
 
+- iOS/macOS → App Store Connect, Firebase App Distribution
+- Android → Play Store, Firebase App Distribution
+- Web → Firebase Hosting, GitHub Pages
+- Linux → Snap Store
+- Windows → Microsoft Store
+
+Make sure you are building the right version of the app for the right platform where you are trying to publish.
+
+The idea is that by setting a handful of input flags, a single workflow step covers the entire lifecycle from a clean repo to a published release — with no need to wire up the individual modular actions manually.
 
 ## Modular Actions
 
