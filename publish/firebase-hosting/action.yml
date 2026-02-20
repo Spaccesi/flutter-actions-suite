@@ -8,7 +8,7 @@ inputs:
     description: 'Firebase project ID to publish to'
     required: false
   target:
-    description: "Firebase Hosting target to deploy to (optional, defaults to 'default')"
+    description: 'Firebase Hosting target to deploy to (optional)'
     required: false
   debug:
     description: 'Whether to enable debug logging for the deployment process (default: false)'
@@ -35,7 +35,7 @@ runs:
         GOOGLE_APPLICATION_CREDENTIALS: google-application-credentials.json
       run: |
         firebase deploy \
-          --only hosting:${{ inputs.target || 'default' }} \
+          --only hosting${{ inputs.target != '' && format(':{0}', inputs.target) || '' }} \
           ${{ inputs.project-id != '' && format('--project {0}', inputs.project-id) || '' }} \
           ${{ inputs.debug == 'true' && '--debug' || '' }} \
           ${{ inputs.message != '' && format('--message {0}', inputs.message) || '' }}
