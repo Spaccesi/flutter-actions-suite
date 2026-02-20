@@ -39,10 +39,10 @@ runs:
       run: |
         firebase deploy \
           --only hosting:${{ inputs.target || 'default' }} \
-          ${ inputs.project-id && "--project " + inputs.project-id || "" } \
-          ${ inputs.public-dir && "--public " + inputs.public-dir || "" } \
-          ${ inputs.debug == "true" && "--debug" || "" } \
-          ${ inputs.message && "--message " + inputs.message || "" }
+          ${{ inputs.project-id != '' && format('--project {0}', inputs.project-id) || '' }} \
+          ${{ inputs.public-dir != '' && format('--public {0}', inputs.public-dir) || '' }} \
+          ${{ inputs.debug == 'true' && '--debug' || '' }} \
+          ${{ inputs.message != '' && format('--message {0}', inputs.message) || '' }}
 
     - name: Remove credentials file
       if: success() || failure()
