@@ -33,19 +33,19 @@ inputs:
   run-test:
     description: 'Whether to run tests.'
     required: false
-    default: 'false'
+    default: 'true'
   run-analyze:
     description: 'Whether to run flutter analyze.'
     required: false
-    default: 'false'
+    default: 'true'
   run-license:
     description: 'Whether to check for licenses of dependencies.'
     required: false
-    default: 'false'
+    default: 'true'
   run-coverage:
     description: 'Whether to run tests with coverage and generate a coverage report.'
     required: false
-    default: 'false'
+    default: 'true'
   analyze-fails-if-infos:
     description: 'Whether to fail the analyze step if info level issues are found.'
     required: false
@@ -62,7 +62,7 @@ inputs:
     description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
     default: 'false'
-  
+
   # General Build step inputs
   build-platform:
     description: 'List of platform to build. Be aware some platform builds need to be run on specific OS. Available options: android, ios, web, windows, macos, linux, none.'
@@ -75,7 +75,7 @@ inputs:
     required: false
     default: 'release'
   build-name:
-    description: 'The build name to use for the app. This is typically used as the version name shown to users. If not set, the version from pubspec.yaml will be used.'  
+    description: 'The build name to use for the app. This is typically used as the version name shown to users. If not set, the version from pubspec.yaml will be used.'
     required: false
   build-number:
     description: 'The build number to use for the app. This is typically used as the internal version number. If not set, the version from pubspec.yaml will be used.'
@@ -91,7 +91,6 @@ inputs:
   ios-signing-certificate-base64:
     description: 'Base64 encoded P12 file containing the iOS signing certificate and private key. Required for building and signing iOS apps.'
     required: false
-  
 
   # macOS Build & Publish step inputs
   macos-signing-certificate-base64:
@@ -109,6 +108,9 @@ inputs:
     required: false
   firebase-project-id:
     description: 'Firebase project ID to publish to. Required for publishing to Firebase Hosting.'
+    required: false
+  firebase-hosting-target:
+    description: 'Target to publish to. Required for publishing to Firebase Hosting.'
     required: false
 
   # Android Build step inputs
@@ -131,11 +133,10 @@ inputs:
   android-local-properties-file:
     description: 'Path to a local.properties file containing the path to the Android SDK. This is required if the Android SDK is not available in the default location on the runner.'
     required: false
-  
+
 runs:
   using: 'composite'
   steps:
-
     # -- Check inputs -----------------------------------------------------
     - name: Validate inputs
       shell: bash
@@ -216,7 +217,7 @@ runs:
         flutter-version: ${{ inputs.flutter-version }}
         channel: ${{ inputs.flutter-channel }}
         cache: true
-    
+
     # -- Prepare -----------------------------------------------------
     - name: Prepare Repository
       uses: Spaccesi/flutter-actions-suite/prepare@main
@@ -277,7 +278,7 @@ runs:
 
     - name: Build web
       if: contains(inputs.build-platform, 'web')
-      uses: Spaccesi/flutter-actions-suite/build/web@main 
+      uses: Spaccesi/flutter-actions-suite/build/web@main
       with:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
@@ -303,7 +304,7 @@ runs:
 
     - name: Build macos
       if: contains(inputs.build-platform, 'macos')
-      uses: Spaccesi/flutter-actions-suite/build/macos@main 
+      uses: Spaccesi/flutter-actions-suite/build/macos@main
       with:
         macos-signing-certificate-base64: ${{ inputs.macos-signing-certificate-base64 }}
         build-mode: ${{ inputs.build-mode }}
@@ -317,7 +318,7 @@ runs:
 
     - name: Build linux
       if: contains(inputs.build-platform, 'linux')
-      uses: Spaccesi/flutter-actions-suite/build/linux@main 
+      uses: Spaccesi/flutter-actions-suite/build/linux@main
       with:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
@@ -362,7 +363,6 @@ runs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        
 
     - name: Upload as Artifact
       if: contains(inputs.publish-destination, 'github-artifact')
@@ -380,7 +380,7 @@ runs:
     # -- Publish to firebase ------------------------------------------------------------
     - name: Publish iOS to Firebase App Distribution
       if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'ios')
-      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main
       with:
         release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
@@ -390,7 +390,7 @@ runs:
 
     - name: Publish android to Firebase App Distribution
       if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'android')
-      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main 
+      uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main
       with:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
         release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
@@ -415,7 +415,7 @@ runs:
         package-name: ${{ inputs.play-store-package-name }}
         track: ${{ inputs.play-store-track }}
         service-account-json-base64: ${{ inputs.play-store-service-account-json-base64 }}
-        
+
     - name: Deploy to ios App Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/publish/ios-app-store@main
@@ -430,7 +430,7 @@ runs:
 
     - name: Deploy to Mac App Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'macos')
-      uses: Spaccesi/flutter-actions-suite/publish/macos-app-store@main 
+      uses: Spaccesi/flutter-actions-suite/publish/macos-app-store@main
       with:
         apple-id: ${{ inputs.macos-app-store-apple-id }}
         apple-issuer-id: ${{ inputs.macos-app-store-apple-issuer-id }}
@@ -442,6 +442,3 @@ runs:
       uses: Spaccesi/flutter-actions-suite/publish/snap-store@main
       with:
         snap-store-token: ${{ inputs.snap-store-token }}
-    
-
-
