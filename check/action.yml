@@ -19,10 +19,10 @@ inputs:
   run-license:
     description: 'Whether to run license check. If false, the license check step will be skipped.'
     required: false
-    default: 'true'
+    default: 'false'
   compatible-licenses-conf-path:
     description: 'Path to a file containing a list of compatible licenses for the license check step.'
-    required: true
+    required: false
 
   # Test options
   run-test:

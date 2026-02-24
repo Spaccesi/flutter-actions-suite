@@ -103,6 +103,9 @@ inputs:
     required: false
 
   # Web Build & Publish step inputs
+  base-href:
+    description: "Overrides the href attribute of the <base> tag in web/index.html. No change is done to web/index.html file if this flag is not provided. The value has to start and end with a slash '/'. For more information: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base"
+    required: false
   firebase-service-account-base64:
     description: 'Base64 encoded Firebase service account key (JSON file). Required for publishing to Firebase Hosting.'
     required: false
@@ -381,19 +384,22 @@ runs:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
 
-    - name: Upload as Artifact
-      if: contains(inputs.publish-destination, 'github-artifact')
-      uses: actions/upload-artifact@v6
+    - name: Setup Pages
+      if: contains(inputs.publish-destination, 'github-pages') && contains(inputs.build-platform, 'web')
+      uses: actions/configure-pages@v4
       with:
-        name: ${{ inputs.artifact-name }}
+        enablement: true
+        
+    - name: Upload artifact
+      if: contains(inputs.publish-destination, 'github-artifact') || contains(inputs.publish-destination, 'github-pages')
+      uses: actions/upload-pages-artifact@v3
+      with:
         path: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
-    - name: Upload as Github Page
+    - name: Deploy to GitHub Pages
       if: contains(inputs.publish-destination, 'github-pages') && contains(inputs.build-platform, 'web')
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        publish_dir: ${{ env.FLUTTER_BUILD_OUTPUT }}
-        github_token: ${{ inputs.github-token }}
+      id: deployment
+      uses: actions/deploy-pages@v4
 
     # -- Publish to firebase ------------------------------------------------------------
     - name: Publish iOS to Firebase App Distribution
