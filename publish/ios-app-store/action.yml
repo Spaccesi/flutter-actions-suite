@@ -12,8 +12,14 @@ description: |
   - release-notes-file: Path to a file containing release notes for this version (optional).
 
 inputs:
-  app-store-connect-key:
-    description: "Base64 encoded App Store Connect API key file (JSON format)"
+  apple-api-key-id:
+    description: "Apple API key ID. Required for publishing to App Store Connect."
+    required: true
+  apple-api-key-issuer:
+    description: "Apple API key issuer. Required for publishing to App Store Connect."
+    required: true
+  apple-api-key-content:
+    description: "Apple API key content. Required for publishing to App Store Connect."
     required: true
   app-id:
     description: "App Store Connect app ID (e.g. 1234567890)"

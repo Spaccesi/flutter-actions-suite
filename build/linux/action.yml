@@ -22,7 +22,7 @@ inputs:
     description: 'The build number to use for the Linux app.'
     required: false
     default: ''
-  dart-defines:
+  dart-define:
     description: 'Dart defines in KEY=VALUE format, one per line.'
     required: false
     default: ''
@@ -71,7 +71,7 @@ runs:
           --${{ inputs.build-mode }} \
           ${{ inputs.build-name != '' && '--build-name=${{ inputs.build-name }}' || '' }} \
           ${{ inputs.build-number != '' && '--build-number=${{ inputs.build-number }}' || '' }} \
-          ${{ inputs.dart-defines != '' && '--dart-define=${{ inputs.dart-defines }}' || '' }} \
+          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
           ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
           ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \

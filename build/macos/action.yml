@@ -10,8 +10,20 @@ description: |
   Xcode and the Apple code signing tools. It will not work on non-macOS runners. 
   Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
-  macos-signing-certificate-base64:
-    description: "Base64 encoded macOS signing certificate (p12 file)"
+  macos-distribution-certificate-base64:
+    description: "Base64 encoded macOS distribution signing certificate (p12 file)"
+    required: true
+  macos-distribution-certificate-password:
+    description: "Password for the macOS distribution signing certificate (p12 file)"
+    required: true
+  macos-installer-certificate-base64:
+    description: "Base64 encoded macOS installer signing certificate (p12 file)"
+    required: true
+  macos-installer-certificate-password:
+    description: "Password for the macOS installer signing certificate (p12 file)"
+    required: true
+  macos-provisioning-profile-base64:
+    description: "Base64 encoded macOS provisioning profile"
     required: true
   build-mode:
     description: "Build mode for the macOS app (debug, profile, release)"
@@ -42,6 +54,7 @@ inputs:
     description: "Whether to codesign the application bundle (only available on device builds, default: true)"
     required: false
     default: "true"
+  
  
 runs:  
   using: "composite"
@@ -52,7 +65,84 @@ runs:
       uses: timheuer/base64-to-file@v1
       with:
         fileName: macos-signing-certificate.p12
-        encodedString: ${{ inputs.macos-signing-certificate-base64 }} 
+        encodedString: ${{ inputs.macos-distribution-certificate-base64 }} 
+
+    - name: Install Apple Certificate
+      shell: bash 
+      env:
+        BUILD_CERTIFICATE_BASE64: ${{ inputs.macos-distribution-certificate-base64 }}
+        P12_PASSWORD: ${{ inputs.macos-distribution-certificate-password }}
+        KEYCHAIN_PASSWORD: "dist_password"
+      run: |
+        # create variables
+        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+        # import certificate and provisioning profile from secrets
+        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+        # create temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+        # import certificate to keychain
+        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+
+    - name: Install Installer Certificate
+      shell: bash 
+      env:
+        INSTALLER_CERTIFICATE_BASE64: ${{ inputs.macos-installer-certificate-base64 }}
+        P12_PASSWORD: ${{ inputs.macos-installer-certificate-password }}
+        KEYCHAIN_PASSWORD: "dist_password"
+      run: |
+        # create variables
+        CERTIFICATE_PATH=$RUNNER_TEMP/build_installer_certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+        # import certificate from secrets
+        echo -n "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+        
+        echo "Checking if installer certificate exists..."
+        ls -l $CERTIFICATE_PATH
+
+        # import certificate to keychain
+        # Using -T /usr/bin/codesign to explicitly allow usage
+        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k $KEYCHAIN_PATH
+
+    - name: Debug Keychain Identities (Full)
+      shell: bash 
+      run: |
+          echo "--- Identities (codesigning) ---"
+          security find-identity -v -p codesigning
+          echo "--- All Keychain Items ---"
+          # dump-keychain might be verbose but necessary here
+          security dump-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+
+    - name: Install Provisioning Profile
+      shell: bash 
+      env:
+        PROVISIONING_PROFILE_BASE64: ${{ inputs.macos-provisioning-profile-base64 }}
+      run: |
+        # create variables
+        PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
+
+        # import provisioning profile from secrets
+        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+        # apply provisioning profile
+        mkdir -p ~/Library/ProvisioningProfiles
+        cp $PP_PATH ~/Library/ProvisioningProfiles
+        
+        # Extract UUID and copy with UUID name to ensure detection
+        UUID=`/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< $(security cms -D -i $PP_PATH)`
+        cp $PP_PATH ~/Library/ProvisioningProfiles/$UUID.provisionprofile
+        
+        echo "PP_PATH=$PP_PATH" >> $GITHUB_ENV
+        echo "profile_uuid=$UUID" >> $GITHUB_ENV
+    
+    - uses: subosito/flutter-action@v2
         
     - name: Build macOS app
       shell: bash

@@ -1,15 +1,19 @@
 name: Publish Flutter app to Play Store
 description: Publish the built Flutter app to the Google Play Store
 inputs:
-  service-account-json-base64:
+  android-service-account-json-base64:
     description: "Base64 encoded Google Play service account JSON key"
     required: true
-  package-name:
+  android-package-name:
     description: "The package name of the app to publish (e.g. com.example.myapp)"
     required: true
-  track:
+  android-track:
     description: "The track to publish the app to (e.g. alpha, beta, production)"
     required: true
+  android-release-files:
+    description: "The release files to publish to the Play Store (e.g. build/app/outputs/bundle/release/app-release.aab)"
+    required: false
+    default: 'build/app/outputs/bundle/release/app-release.aab'
 runs:  
   using: "composite"
   steps:
@@ -18,10 +22,13 @@ runs:
       uses: timheuer/base64-to-file@v1
       with:
         fileName: service-account.json
-        encodedString: ${{ inputs.service-account-json-base64 }}
+        encodedString: ${{ inputs.android-service-account-json-base64 }}
+
     - name: Publish to Play Store
       uses: r0adkll/upload-google-play@v1
       with:
+        serviceAccountJsonPlainText: ${{ inputs.android-service-account-json-base64 }}
+        packageName: ${{ inputs.android-package-name }}
+        releaseFiles: ${{ inputs.android-release-files }}
+        track: ${{ inputs.android-track }} 
         serviceAccountJson: ${{ steps.service_account.outputs.filePath }}
-        packageName: ${{ inputs.package-name }}
-        track: ${{ inputs.track }}  

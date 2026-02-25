@@ -4,17 +4,17 @@ inputs:
   firebase-service-account-base64:
     description: 'Base64 encoded Firebase service account key (JSON file)'
     required: true
-  project-id:
+  firebase-project-id:
     description: 'Firebase project ID to publish to'
     required: false
-  target:
+  firebase-target:
     description: 'Firebase Hosting target to deploy to (optional)'
     required: false
-  debug:
+  firebase-debug:
     description: 'Whether to enable debug logging for the deployment process (default: false)'
     required: false
     default: 'false'
-  message:
+  firebase-message:
     description: 'A message to include with the deployment (optional)'
     required: false
 runs:
@@ -35,10 +35,10 @@ runs:
         GOOGLE_APPLICATION_CREDENTIALS: google-application-credentials.json
       run: |
         firebase deploy \
-          --only hosting${{ inputs.target != '' && format(':{0}', inputs.target) || '' }} \
-          ${{ inputs.project-id != '' && format('--project {0}', inputs.project-id) || '' }} \
-          ${{ inputs.debug == 'true' && '--debug' || '' }} \
-          ${{ inputs.message != '' && format('--message {0}', inputs.message) || '' }}
+          --only hosting${{ inputs.firebase-target != '' && format(':{0}', inputs.firebase-target) || '' }} \
+          ${{ inputs.firebase-project-id != '' && format('--project {0}', inputs.firebase-project-id) || '' }} \
+          ${{ inputs.firebase-debug == 'true' && '--debug' || '' }} \
+          ${{ inputs.firebase-message != '' && format('--message {0}', inputs.firebase-message) || '' }}
 
     - name: Remove credentials file
       if: success() || failure()

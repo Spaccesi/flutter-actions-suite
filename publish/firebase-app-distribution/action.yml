@@ -1,62 +1,62 @@
 name: Publish to Firebase App Distribution
 description: Publish the app to Firebase App Distribution
 inputs:
-  release-binary-file:
-    description: 
+  firebase-release-binary-file:
+    description: "File you want to upload"
     required: true
-  firebase-service-account-base64:
+  firebase-firebase-service-account-base64:
     description: "Base64 encoded Firebase service account JSON key file"
     required: true
-  app-id:
+  firebase-app-id:
     description: "Firebase App ID (e.g. 1:1234567890:android:abcdef123456)"
     required: true
-  groups:
+  firebase-groups:
     description: "Comma-separated list of tester groups to distribute the app to (optional)"
     required: false
-  groups-file:
+  firebase-groups-file:
     description: "Path to a file containing a comma-separated list of tester groups to distribute the app to (optional)"
     required: false
-  testers:
+  firebase-testers:
     description: "Comma-separated list of tester email addresses to distribute the app to (optional)"
     required: false
-  testers-file:
+  firebase-testers-file:
     description: "Path to a file containing a comma-separated list of tester email addresses to distribute the app to (optional)"
     required: false
-  release-notes:
+  firebase-release-notes:
     description: "Release notes for this distribution (optional)"
     required: false
-  release-notes-file:
+  firebase-release-notes-file:
     description: "Path to a file containing release notes for this distribution (optional)"
     required: false
-  debug:
+  firebase-debug:
     description: "Whether to enable debug logging for the upload process (default: false)"
     required: false
     default: "false" 
-  test-devices:
+  firebase-test-devices:
     description: "Comma-separated list of test device IDs to distribute the app to (optional, only for iOS)"
     required: false
-  test-devices-file:
+  firebase-test-devices-file:
     description: "Path to a file containing a comma-separated list of test device IDs to distribute the app to (optional, only for iOS)"
     required: false
-  test-username:
+  firebase-test-username:
     description: "Username for authenticating with the Firebase CLI (optional, only needed if not using a service account key)"
     required: false
-  test-username-file:
+  firebase-test-username-file:
     description: "Path to a file containing the username for authenticating with the Firebase CLI (optional, only needed if not using a service account key)"
     required: false
-  test-password:
+  firebase-test-password:
     description: "Password for authenticating with the Firebase CLI (optional, only needed if not using a service account key)"
     required: false
-  test-password-file:
+  firebase-test-password-file:
     description: "Path to a file containing the password for authenticating with the Firebase CLI (optional, only needed if not using a service account key)"
     required: false
-  test-non-blocking:
+  firebase-test-non-blocking:
     description: "Whether to run the upload process in non-blocking mode, which allows the workflow to continue without waiting for the upload to complete (default: false)"
     required: false
-  test-case-ids:
+  firebase-test-case-ids:
     description: "Comma-separated list of test case IDs to associate with this distribution (optional)"
     required: false
-  test-case-ids-file:
+  firebase-test-case-ids-file:
     description: "Path to a file containing a comma-separated list of test case IDs to associate with this distribution (optional)"
     required: false
 runs:  
@@ -73,16 +73,16 @@ runs:
       env:
         FIREBASE_TOKEN: ${{ inputs.firebase-token }}
       run: |
-        firebase appdistribution:distribute \
-          --app ${{ inputs.app-id }} \
-          ${ inputs.groups && "--groups " + inputs.groups } \
-          ${ inputs.testers && "--testers " + inputs.testers } \
-          ${ inputs.release-notes && "--release-notes " + inputs.release-notes } \
+        firebase appdistribution:diqstribute \
+          --app ${{ inputs.firebase-app-id }} \
+          ${ inputs.firebase-groups && "--groups " + inputs.firebase-groups } \
+          ${ inputs.firebase-testers && "--testers " + inputs.firebase-testers } \
+          ${ inputs.firebase-release-notes && "--release-notes " + inputs.firebase-release-notes } \
           ${ inputs.debug == "true" && "--debug" } \
-          ${ inputs.test-devices && "--test-devices " + inputs.test-devices } \
-          ${ inputs.test-username && "--test-username " + inputs.test-username } \
-          ${ inputs.test-password && "--test-password " + inputs.test-password } \
-          ${ inputs.test-non-blocking == "true" && "--non-blocking" } \
-          ${ inputs.test-case-ids && "--test-case-ids " + inputs.test-case-ids } \
-          ${ inputs.test-case-ids-file && "--test-case-ids-file " + inputs.test-case-ids-file } \
-          ${{ inputs.release-binary-file }}
+          ${ inputs.firebase-test-devices && "--test-devices " + inputs.firebase-test-devices } \
+          ${ inputs.firebase-test-username && "--test-username " + inputs.firebase-test-username } \
+          ${ inputs.firebase-test-password && "--test-password " + inputs.firebase-test-password } \
+          ${ inputs.firebase-test-non-blocking == "true" && "--non-blocking" } \
+          ${ inputs.firebase-test-case-ids && "--test-case-ids " + inputs.firebase-test-case-ids } \
+          ${ inputs.firebase-test-case-ids-file && "--test-case-ids-file " + inputs.firebase-test-case-ids-file } \
+          ${{ inputs.firebase-release-binary-file }}

@@ -8,10 +8,6 @@ inputs:
 runs:  
   using: "composite"
   steps:
-    - name: Install Linux build dependencies
-      shell: bash
-      run: sudo apt-get update && sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa clang cmake git ninja-build pkg-config liblzma-dev libstdc++-12-dev libgtk-3-dev
-
     - name: Install Snapcraft
       shell: bash
       run: sudo snap install snapcraft --classic
