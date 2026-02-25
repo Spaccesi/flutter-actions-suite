@@ -9,7 +9,8 @@ inputs:
   # Flutter configuration inputs
   flutter-version:
     description: 'The Flutter version to use.'
-    required: true
+    required: false
+    default: ""
   flutter-channel:
     description: 'The Flutter channel to use (stable, beta, dev, master).'
     required: false
@@ -87,14 +88,43 @@ inputs:
     description: 'Additional Dart define variables to pass to the Flutter build command. This should be a comma separated list of key=value pairs.'
     required: false
 
+  # Apple Publish step inputs
+  apple-api-key-id:
+    description: 'Apple API key ID. Required for publishing to App Store Connect.'
+    required: false
+  apple-api-key-issuer:
+    description: 'Apple API key issuer. Required for publishing to App Store Connect.'
+    required: false
+  apple-api-key-content:
+    description: 'Apple API key content. Required for publishing to App Store Connect.'
+    required: false
+
   # iOS Build & Publish step inputs
-  ios-signing-certificate-base64:
-    description: 'Base64 encoded P12 file containing the iOS signing certificate and private key. Required for building and signing iOS apps.'
+  ios-distribution-certificate-base64:
+    description: 'Base64 encoded P12 file containing the iOS distribution certificate and private key. Required for building and signing iOS apps.'
+    required: false
+  ios-distribution-certificate-password:
+    description: 'Password for the iOS distribution certificate. Required for building and signing iOS apps.'
+    required: false
+  ios-provisioning-profile-base64:
+    description: 'Base64 encoded provisioning profile for iOS. Required for building and signing iOS apps.'
     required: false
 
   # macOS Build & Publish step inputs
-  macos-signing-certificate-base64:
-    description: 'Base64 encoded P12 file containing the macOS signing certificate and private key. Required for building and signing macOS apps.'
+  macos-distribution-certificate-base64:
+    description: 'Base64 encoded P12 file containing the macOS distribution certificate and private key. Required for building and signing macOS apps.'
+    required: false
+  macos-distribution-certificate-password:
+    description: 'Password for the macOS distribution certificate. Required for building and signing macOS apps.'
+    required: false
+  macos-installer-certificate-base64:
+    description: 'Base64 encoded P12 file containing the macOS installer certificate and private key. Required for building and signing macOS apps.'
+    required: false
+  macos-installer-certificate-password:
+    description: 'Password for the macOS installer certificate. Required for building and signing macOS apps.'
+    required: false
+  macos-provisioning-profile-base64:
+    description: 'Base64 encoded provisioning profile for macOS. Required for building and signing macOS apps.'
     required: false
 
   # Snap Build & Publish step inputs
@@ -141,6 +171,25 @@ inputs:
   android-local-properties-file:
     description: 'Path to a local.properties file containing the path to the Android SDK. This is required if the Android SDK is not available in the default location on the runner.'
     required: false
+  android-playstore-account-key:
+    description: 'Base64 encoded JSON key file for the Google Play Store service account. Required for publishing to Google Play Store.'
+    required: false
+
+  # Windows Build step inputs
+  microsoft-partner-center-tenant-id:
+    description: 'Microsoft Partner Center tenant ID. Required for publishing to Microsoft Store.'
+    required: false
+  microsoft-partner-center-seller-id:
+    description: 'Microsoft Partner Center seller ID. Required for publishing to Microsoft Store.'
+    required: false
+  microsoft-center-client-id:
+    description: 'Microsoft Partner Center client ID. Required for publishing to Microsoft Store.'
+    required: false
+  microsoft-partner-center-client-secret:
+    description: 'Microsoft Partner Center client secret. Required for publishing to Microsoft Store.'
+    required: false
+
+  
 
 runs:
   using: 'composite'
@@ -273,7 +322,7 @@ runs:
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
         flavor: ${{ inputs.flavor }}
-        dart-define: ${{ inputs.dart-defines }}
+        dart-define: ${{ inputs.dart-define }}
         no-pub: ${{ inputs.no-pub }}
         target: ${{ inputs.target }}
         obfuscate: ${{ inputs.obfuscate }}
@@ -283,9 +332,9 @@ runs:
       if: contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/build/ios@main
       with:
-        ios-signing-certificate-base64: ${{ inputs.ios-signing-certificate-base64 }}
+        ios-distribution-certificate-base64: ${{ inputs.ios-distribution-certificate-base64 }}
+        ios-distribution-certificate-password: ${{ inputs.ios-distribution-certificate-password }}
         ios-provisioning-profile-base64: ${{ inputs.ios-provisioning-profile-base64 }}
-        ios-signing-certificate-password: ${{ inputs.ios-signing-certificate-password }}
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
@@ -325,8 +374,12 @@ runs:
     - name: Build macos
       if: contains(inputs.build-platform, 'macos')
       uses: Spaccesi/flutter-actions-suite/build/macos@main
-      with:
-        macos-signing-certificate-base64: ${{ inputs.macos-signing-certificate-base64 }}
+      with: 
+        macos-distribution-certificate-base64: ${{ inputs.macos-distribution-certificate-base64 }}
+        macos-distribution-certificate-password: ${{ inputs.macos-distribution-certificate-password }}
+        macos-installer-certificate-base64: ${{ inputs.macos-installer-certificate-base64 }}
+        macos-installer-certificate-password: ${{ inputs.macos-installer-certificate-password }}
+        macos-provisioning-profile-base64: ${{ inputs.macos-provisioning-profile-base64 }}
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
@@ -343,7 +396,7 @@ runs:
         build-mode: ${{ inputs.build-mode }}
         build-name: ${{ inputs.build-name }}
         build-number: ${{ inputs.build-number }}
-        dart-defines: ${{ inputs.dart-define }}
+        dart-define: ${{ inputs.dart-define }}
         no-pub: 'true'
         obfuscate: ${{ inputs.obfuscate }}
 
@@ -406,58 +459,67 @@ runs:
       if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main
       with:
-        release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
+        firebase-release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
-        app-id: ${{ inputs.firebase-app-distribution-app-id }}
-        groups: ${{ inputs.firebase-app-distribution-groups }}
-        release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
+        firebase-app-id: ${{ inputs.firebase-app-id }}
+        firebase-groups: ${{ inputs.firebase-groups }}
+        firebase-release-notes: ${{ inputs.firebase-release-notes }}
 
     - name: Publish android to Firebase App Distribution
       if: contains(inputs.publish-destination, 'firebase-app-distribution') && contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-app-distribution@main
       with:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
-        release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
-        app-id: ${{ inputs.firebase-app-distribution-app-id }}
-        groups: ${{ inputs.firebase-app-distribution-groups }}
-        release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
+        firebase-release-binary-file: ${{ env.FLUTTER_BUILD_OUTPUT }}
+        firebase-app-id: ${{ inputs.firebase-app-distribution-app-id }}
+        firebase-groups: ${{ inputs.firebase-app-distribution-groups }}
+        firebase-release-notes: ${{ inputs.firebase-app-distribution-release-notes }}
 
     - name: Publish to Firebase Hosting
       if: contains(inputs.publish-destination, 'firebase-hosting') && contains(inputs.build-platform, 'web')
       uses: Spaccesi/flutter-actions-suite/publish/firebase-hosting@main
       with:
         firebase-service-account-base64: ${{ inputs.firebase-service-account-base64 }}
-        target: ${{ inputs.firebase-hosting-target }}
-        project-id: ${{ inputs.firebase-project-id }}
+        firebase-target: ${{ inputs.firebase-hosting-target }}
+        firebase-project-id: ${{ inputs.firebase-project-id }}
 
     # -- Publish to stores ------------------------------------------------------------
     - name: Deploy to Play Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'android')
       uses: Spaccesi/flutter-actions-suite/publish/play-store@main
       with:
-        package-name: ${{ inputs.play-store-package-name }}
-        track: ${{ inputs.play-store-track }}
-        service-account-json-base64: ${{ inputs.play-store-service-account-json-base64 }}
+        android-package-name: ${{ inputs.play-store-package-name }}
+        android-track: ${{ inputs.play-store-track }}
+        android-service-account-json-base64: ${{ inputs.play-store-service-account-json-base64 }}
+        android-release-files: ${{ env.FLUTTER_BUILD_OUTPUT }}
 
     - name: Deploy to ios App Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'ios')
       uses: Spaccesi/flutter-actions-suite/publish/ios-app-store@main
       with:
-        app-id: ${{ inputs.app-store-app-id }}
-        app-store-connect-key: ${{ inputs.app-store-connect-key }}
+        apple-api-key-id: ${{ inputs.apple-api-key-id }}
+        apple-api-key-content: ${{ inputs.apple-api-key-content }}
+        apple-api-key-issuer: ${{ inputs.apple-api-key-issuer }}
+        apple-app-id: ${{ inputs.apple-app-id }}
         app-version: ${{ inputs.app-store-app-version }}
 
     - name: Deploy to Microsoft Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'windows')
       uses: Spaccesi/flutter-actions-suite/publish/microsoft-store@main
+      with:
+        microsoft-partner-center-tenant-id: ${{ inputs.microsoft-partner-center-tenant-id }}
+        microsoft-partner-center-seller-id: ${{ inputs.microsoft-partner-center-seller-id }}
+        microsoft-partner-center-client-id: ${{ inputs.microsoft-partner-center-client-id }}
+        microsoft-partner-center-client-secret: ${{ inputs.microsoft-partner-center-client-secret }}
+        microsoft-store-app-id: ${{ inputs.microsoft-store-app-id }}
 
     - name: Deploy to Mac App Store
       if: contains(inputs.publish-destination, 'store') && contains(inputs.build-platform, 'macos')
       uses: Spaccesi/flutter-actions-suite/publish/macos-app-store@main
       with:
-        apple-id: ${{ inputs.macos-app-store-apple-id }}
-        apple-issuer-id: ${{ inputs.macos-app-store-apple-issuer-id }}
-        apple-key-content: ${{ inputs.macos-app-store-apple-key-content }}
+        apple-api-key-id: ${{ inputs.macos-app-store-apple-id }}
+        apple-api-key-issuer-id: ${{ inputs.macos-app-store-apple-issuer-id }}
+        apple-api-key-content: ${{ inputs.macos-app-store-apple-key-content }}
         macos-provisioning-profile-base64: ${{ inputs.macos-app-store-macos-provisioning-profile-base64 }}
 
     - name: Deploy to Linux App Store

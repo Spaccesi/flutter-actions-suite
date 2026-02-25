@@ -4,7 +4,7 @@ inputs:
   firebase-release-binary-file:
     description: "File you want to upload"
     required: true
-  firebase-firebase-service-account-base64:
+  firebase-service-account-base64:
     description: "Base64 encoded Firebase service account JSON key file"
     required: true
   firebase-app-id:

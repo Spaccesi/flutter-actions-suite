@@ -21,7 +21,7 @@ inputs:
   apple-api-key-content:
     description: "Apple API key content. Required for publishing to App Store Connect."
     required: true
-  app-id:
+  apple-app-id:
     description: "App Store Connect app ID (e.g. 1234567890)"
     required: true
   app-version:
