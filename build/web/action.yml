@@ -9,7 +9,7 @@ description: |
   static assets URL, PWA strategy, and WebAssembly support.
 inputs:
   dart-define:
-    description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
+    description: 'Dart define variables for the Flutter build (optional, format: KEY=VALUE)'
     required: false
     default: ''
   build-number:
@@ -17,11 +17,11 @@ inputs:
     required: false
     default: ''
   build-mode:
-    description: "The build mode to use when building the app. Available options: debug, profile, release. Default is release."
+    description: 'The build mode to use when building the app. Available options: debug, profile, release. Default is release.'
     required: false
     default: 'release'
   target:
-    description: "The main entry-point file of the application (default: lib/main.dart)"
+    description: 'The main entry-point file of the application (default: lib/main.dart)'
     required: false
     default: ''
   build-name:
@@ -29,7 +29,7 @@ inputs:
     required: false
     default: ''
   output:
-    description: "The absolute path to the directory where the web build output will be placed. By default, this is <current-directory>/build/web."
+    description: 'The absolute path to the directory where the web build output will be placed. By default, this is <current-directory>/build/web.'
     required: false
     default: ''
   no-pub:
@@ -45,12 +45,12 @@ inputs:
     required: false
     default: ''
   wasm:
-    description: "Whether to build the web app with WebAssembly (default: false). See https://flutter.dev/to/wasm for more information."
+    description: 'Whether to build the web app with WebAssembly (default: false). See https://flutter.dev/to/wasm for more information.'
     required: false
-    default: "false"
-    
+    default: 'false'
+
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Build web app
       shell: bash

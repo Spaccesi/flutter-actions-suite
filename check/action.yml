@@ -65,7 +65,7 @@ inputs:
     description: 'Whether to skip running pub get before running tests. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
     required: false
     default: 'true'
-  
+
 runs:
   using: 'composite'
   steps:
@@ -81,7 +81,7 @@ runs:
       uses: Spaccesi/flutter-actions-suite/check/license@main
       with:
         compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
-        
+
     - name: Run Tests
       if: ${{ inputs.run-test == 'true' }}
       uses: Spaccesi/flutter-actions-suite/check/test@main
@@ -95,4 +95,3 @@ runs:
         run-coverage: ${{ inputs.run-coverage }}
         create-coverage-badge: ${{ inputs.create-coverage-badge }}
         no-pub: ${{ inputs.no-pub }}
-        

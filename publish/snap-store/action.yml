@@ -2,11 +2,11 @@ name: Publish Flutter app to Snap Store
 description: Publish the built Flutter app to the Snap Store
 inputs:
   snap-store-token:
-    description: "Snap Store API token with permissions to publish snaps"
+    description: 'Snap Store API token with permissions to publish snaps'
     required: true
 
-runs:  
-  using: "composite"
+runs:
+  using: 'composite'
   steps:
     - name: Install Snapcraft
       shell: bash

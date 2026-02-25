@@ -1,5 +1,5 @@
 name: Build ios app
-description: | 
+description: |
   Build the iOS app using Flutter. This action requires a base64 encoded iOS signing 
   certificate (p12 file) to be provided as input, which will be used to sign the app during 
   the build process. The action also supports various build options such as build mode, flavor, 
@@ -11,32 +11,32 @@ description: |
   Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
   ios-distribution-certificate-base64:
-    description: "Base64 encoded iOS signing certificate (p12 file)"
+    description: 'Base64 encoded iOS signing certificate (p12 file)'
     required: true
   ios-distribution-certificate-password:
-    description: "Password for the iOS signing certificate (p12 file)"
+    description: 'Password for the iOS signing certificate (p12 file)'
     required: true
   ios-provisioning-profile-base64:
-    description: "Base64 encoded iOS provisioning profile (.mobileprovision file)"
+    description: 'Base64 encoded iOS provisioning profile (.mobileprovision file)'
     required: true
   build-mode:
-    description: "Build mode for the iOS app (debug, profile, release)"
+    description: 'Build mode for the iOS app (debug, profile, release)'
     required: false
-    default: "release"
+    default: 'release'
   flavor:
-    description: "Flutter flavor to build (optional)"
+    description: 'Flutter flavor to build (optional)'
     required: false
   dart-define:
-    description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
+    description: 'Dart define variables for the Flutter build (optional, format: KEY=VALUE)'
     required: false
   obfuscate:
-    description: "Whether to obfuscate the Dart code in release builds (default: false)"
+    description: 'Whether to obfuscate the Dart code in release builds (default: false)'
     required: false
   no-pub:
     description: "Whether to skip running 'flutter pub get' before the build (default: false)"
     required: false
   target:
-    description: "The main entry-point file of the application (default: lib/main.dart)"
+    description: 'The main entry-point file of the application (default: lib/main.dart)'
     required: false
   build-number:
     description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
@@ -45,13 +45,12 @@ inputs:
     description: "A 'x.y.z' string used as the version number shown to users. For each new version of your app, you will provide a version number to differentiate it from previous versions. On Android it is used as 'versionName'. "
     required: false
   code-sign:
-    description: "Whether to codesign the application bundle (only available on device builds, default: true)"
+    description: 'Whether to codesign the application bundle (only available on device builds, default: true)'
     required: false
-    default: "true"
+    default: 'true'
 
- 
-runs:  
-  using: "composite"
+runs:
+  using: 'composite'
   steps:
     - name: Install Apple Certificate
       shell: bash
@@ -59,7 +58,7 @@ runs:
       env:
         BUILD_CERTIFICATE_BASE64: ${{ inputs.ios-signing-certificate-base64 }}
         P12_PASSWORD: ${{ inputs.ios-signing-certificate-password }}
-        KEYCHAIN_PASSWORD: "dist_password"
+        KEYCHAIN_PASSWORD: 'dist_password'
       run: |
         # create variables
         CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12

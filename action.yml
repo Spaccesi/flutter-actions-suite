@@ -10,7 +10,7 @@ inputs:
   flutter-version:
     description: 'The Flutter version to use.'
     required: false
-    default: ""
+    default: ''
   flutter-channel:
     description: 'The Flutter channel to use (stable, beta, dev, master).'
     required: false
@@ -97,6 +97,9 @@ inputs:
     required: false
   apple-api-key-content:
     description: 'Apple API key content. Required for publishing to App Store Connect.'
+    required: false
+  apple-api-key-issuer-id:
+    description: 'Apple API key issuer ID. Required for publishing to App Store Connect.'
     required: false
 
   # iOS Build & Publish step inputs
@@ -188,8 +191,6 @@ inputs:
   microsoft-partner-center-client-secret:
     description: 'Microsoft Partner Center client secret. Required for publishing to Microsoft Store.'
     required: false
-
-  
 
 runs:
   using: 'composite'
@@ -374,7 +375,7 @@ runs:
     - name: Build macos
       if: contains(inputs.build-platform, 'macos')
       uses: Spaccesi/flutter-actions-suite/build/macos@main
-      with: 
+      with:
         macos-distribution-certificate-base64: ${{ inputs.macos-distribution-certificate-base64 }}
         macos-distribution-certificate-password: ${{ inputs.macos-distribution-certificate-password }}
         macos-installer-certificate-base64: ${{ inputs.macos-installer-certificate-base64 }}
@@ -442,7 +443,7 @@ runs:
       uses: actions/configure-pages@v4
       with:
         enablement: true
-        
+
     - name: Upload artifact
       if: contains(inputs.publish-destination, 'github-artifact') || contains(inputs.publish-destination, 'github-pages')
       uses: actions/upload-pages-artifact@v3
@@ -499,7 +500,7 @@ runs:
       with:
         apple-api-key-id: ${{ inputs.apple-api-key-id }}
         apple-api-key-content: ${{ inputs.apple-api-key-content }}
-        apple-api-key-issuer: ${{ inputs.apple-api-key-issuer }}
+        apple-api-key-issuer-id: ${{ inputs.apple-api-key-issuer-id }}
         apple-app-id: ${{ inputs.apple-app-id }}
         app-version: ${{ inputs.app-store-app-version }}
 

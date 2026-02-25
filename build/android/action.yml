@@ -12,62 +12,62 @@ description: |
   runner, as it relies on the Android SDK and Java.
 inputs:
   android-store-file-base64:
-    description: "Base64 encoded Android keystore file"
+    description: 'Base64 encoded Android keystore file'
     required: true
   android-store-password:
-    description: "Password for the Android keystore"
+    description: 'Password for the Android keystore'
     required: true
   android-key-password:
-    description: "Password for the key in the Android keystore"
+    description: 'Password for the key in the Android keystore'
     required: true
   android-key-alias:
-    description: "Alias for the key in the Android keystore"
+    description: 'Alias for the key in the Android keystore'
     required: true
   android-local-properties-file:
-    description: "Content of the local.properties file for Android build"
+    description: 'Content of the local.properties file for Android build'
     required: true
   java-version:
-    description: "Version of Java to use for the Android build (default: 17)"
+    description: 'Version of Java to use for the Android build (default: 17)'
     required: false
-    default: "17"
+    default: '17'
   java-distribution:
-    description: "Java distribution to use for the Android build (default: zulu)"
+    description: 'Java distribution to use for the Android build (default: zulu)'
     required: false
-    default: "zulu"
+    default: 'zulu'
   flavor:
-    description: "Flutter flavor to build (optional)"
+    description: 'Flutter flavor to build (optional)'
     required: false
   dart-define:
-    description: "Dart define variables for the Flutter build (optional, format: KEY=VALUE)"
+    description: 'Dart define variables for the Flutter build (optional, format: KEY=VALUE)'
     required: false
   dart-define-from-file:
-    description: "Path to a file containing Dart define variables for the Flutter build (optional)"
+    description: 'Path to a file containing Dart define variables for the Flutter build (optional)'
     required: false
   build-type:
-    description: "Type of build to perform (default: appbundle, options: apk, appbundle)"
+    description: 'Type of build to perform (default: appbundle, options: apk, appbundle)'
     required: false
-    default: "appbundle"
+    default: 'appbundle'
   build-mode:
-    description: "Build mode for the Android app (debug, profile, release)"
+    description: 'Build mode for the Android app (debug, profile, release)'
     required: false
-    default: "release"
+    default: 'release'
   build-name:
-    description: "Name of the build (optional)"
+    description: 'Name of the build (optional)'
     required: false
   build-number:
-    description: "Number of the build (optional)"
+    description: 'Number of the build (optional)'
     required: false
   no-pub:
-    description: "Whether to skip publishing (default: false)"
+    description: 'Whether to skip publishing (default: false)'
     required: false
   target:
-    description: "Target file for the build (optional)"
+    description: 'Target file for the build (optional)'
     required: false
   obfuscate:
-    description: "Whether to obfuscate the build (default: false)"
+    description: 'Whether to obfuscate the build (default: false)'
     required: false
-runs:  
-  using: "composite"
+runs:
+  using: 'composite'
   steps:
     - name: Download Android keystore
       if: ${{ inputs.build-mode != 'debug' }}
@@ -76,7 +76,7 @@ runs:
       with:
         fileName: upload-keystore.jks
         encodedString: ${{ inputs.android-store-file-base64 }}
-        
+
     - name: Create key.properties file
       shell: bash
       if: ${{ inputs.build-mode != 'debug' }}
@@ -110,4 +110,3 @@ runs:
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.flavor && format('--flavor={0}', inputs.flavor) || '' }} \
           ${{ inputs.obfuscate == 'false' && '--no-obfuscate' || '' }}
-          

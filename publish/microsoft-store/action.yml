@@ -22,11 +22,11 @@ inputs:
     required: true
     default: ''
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - uses: microsoft/setup-msstore-cli@v1.3
 
-    - name: Configure MS Store CLI  
+    - name: Configure MS Store CLI
       shell: bash
       run: |
         msstore reconfigure \
@@ -34,7 +34,7 @@ runs:
           --sellerId ${{ inputs.microsoft-partner-center-seller-id }} \
           --clientId ${{ inputs.microsoft-partner-center-client-id }} \
           --clientSecret ${{ inputs.microsoft-partner-center-client-secret }}
-      
+
     - name: Create MSIX package
       shell: bash
       run: msstore package .

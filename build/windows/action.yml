@@ -80,4 +80,4 @@ runs:
           ${{ inputs.no-tree-shake-icons == 'true' && '--no-tree-shake-icons' || '' }} \
           ${{ inputs.no-analyze-size == 'true' && '--no-analyze-size' || '' }} \
           ${{ inputs.code-size-directory != '' && format('--code-size-directory={0}', inputs.code-size-directory) || '' }}
-         
+

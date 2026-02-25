@@ -1,5 +1,5 @@
 name: Publish Flutter iOS app to App Store
-description: | 
+description: |
   Publish the built Flutter iOS app to the App Store using the 
   App Store Connect API. This action assumes that you have already 
   built the iOS app and generated an .ipa file in a previous step.
@@ -13,29 +13,29 @@ description: |
 
 inputs:
   apple-api-key-id:
-    description: "Apple API key ID. Required for publishing to App Store Connect."
+    description: 'Apple API key ID. Required for publishing to App Store Connect.'
     required: true
-  apple-api-key-issuer:
-    description: "Apple API key issuer. Required for publishing to App Store Connect."
+  apple-api-key-issuer-id:
+    description: 'Apple API key issuer ID. Required for publishing to App Store Connect.'
     required: true
   apple-api-key-content:
-    description: "Apple API key content. Required for publishing to App Store Connect."
+    description: 'Apple API key content. Required for publishing to App Store Connect.'
     required: true
   apple-app-id:
-    description: "App Store Connect app ID (e.g. 1234567890)"
+    description: 'App Store Connect app ID (e.g. 1234567890)'
     required: true
   app-version:
-    description: "Version of the app to publish (e.g. 1.0.0)"
+    description: 'Version of the app to publish (e.g. 1.0.0)'
     required: true
   release-notes:
-    description: "Release notes for this version (optional)"
+    description: 'Release notes for this version (optional)'
     required: false
   release-notes-file:
-    description: "Path to a file containing release notes for this version (optional)"
+    description: 'Path to a file containing release notes for this version (optional)'
     required: false
-    
-runs:  
-  using: "composite"
+
+runs:
+  using: 'composite'
   steps:
     - name: Install certificates (if needed)
       shell: bash
@@ -44,10 +44,10 @@ runs:
       run: |
         # Create temporary directory for the API key
         mkdir -p $RUNNER_TEMP/app_store_connect_key
-        
+
         # Decode the base64 encoded API key and save it to a file
         echo "$APP_STORE_CONNECT_KEY" | base64 --decode > $RUNNER_TEMP/app_store_connect_key/key.json
-        
+
         # Set environment variable for the API key file path
         echo "APP_STORE_CONNECT_KEY_PATH=$RUNNER_TEMP/app_store_connect_key/key.json" >> $GITHUB_ENV
 
@@ -55,7 +55,7 @@ runs:
       shell: bash
       run: |
         # Install the App Store Connect CLI using npm
-        npm install -g app-store-connect-cli 
+        npm install -g app-store-connect-cli
 
     - name: Publish to App Store Connect
       shell: bash

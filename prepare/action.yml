@@ -20,7 +20,7 @@ runs:
     - name: Install dependencies
       run: flutter pub get
       shell: bash
-      
+
     - name: Run Build Runner
       if: ${{ inputs.run-build-runner == 'true' }}
       uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main

@@ -40,7 +40,7 @@ on:
     branches: [main]
 
 env:
-  FLUTTER_VERSION: '3.41.0'   # pin to a specific Flutter version
+  FLUTTER_VERSION: '3.41.0' # pin to a specific Flutter version
   FLUTTER_CHANNEL: 'stable'
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -95,12 +95,12 @@ jobs:
           path: |
             .
             !.git
-          retention-days: 1   # artifact is only needed within this workflow run
+          retention-days: 1 # artifact is only needed within this workflow run
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 2 – Parallel: platform builds
-# All jobs start at the same time once the `prepare` job succeeds.
-# ─────────────────────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────────────────────────────────────
+  # PHASE 2 – Parallel: platform builds
+  # All jobs start at the same time once the `prepare` job succeeds.
+  # ─────────────────────────────────────────────────────────────────────────────
 
   # ── Android ────────────────────────────────────────────────────────────────
   build-android:
@@ -137,13 +137,13 @@ jobs:
           android-local-properties-file: ${{ secrets.ANDROID_LOCAL_PROPERTIES }}
           build-type: 'appbundle'
           build-mode: 'release'
-          no-pub: 'true'   # pub get was already run above
+          no-pub: 'true' # pub get was already run above
 
   # ── iOS ────────────────────────────────────────────────────────────────────
   build-ios:
     name: Build iOS
     needs: prepare
-    runs-on: macos-latest   # iOS builds require a macOS runner
+    runs-on: macos-latest # iOS builds require a macOS runner
 
     steps:
       - name: Download prepared workspace
@@ -205,7 +205,7 @@ jobs:
   build-windows:
     name: Build Windows
     needs: prepare
-    runs-on: windows-latest   # Windows builds require a Windows runner
+    runs-on: windows-latest # Windows builds require a Windows runner
 
     steps:
       - name: Download prepared workspace
@@ -234,7 +234,7 @@ jobs:
   build-macos:
     name: Build macOS
     needs: prepare
-    runs-on: macos-latest   # macOS builds require a macOS runner
+    runs-on: macos-latest # macOS builds require a macOS runner
 
     steps:
       - name: Download prepared workspace
@@ -288,4 +288,3 @@ jobs:
         with:
           build-mode: 'release'
           no-pub: 'true'
-

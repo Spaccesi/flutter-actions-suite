@@ -41,7 +41,7 @@ inputs:
     description: 'The path where the coverage badge will be created. This input is only used if create-coverage-badge is set to true. The default value is "coverage/html" in the root of the repository.'
     required: false
     default: 'coverage/html'
-    
+
 runs:
   using: 'composite'
   steps:
@@ -58,7 +58,6 @@ runs:
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
           ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
           ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-          
 
     - name: Run Tests & Coverage
       if: inputs.run-coverage == 'true' || inputs.deploy-report != 'none'
@@ -74,7 +73,6 @@ runs:
           ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
           ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
           ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-          
 
     - name: Install genhtml
       shell: bash
