@@ -60,6 +60,7 @@ inputs:
   no-pub:
     description: 'Whether to skip publishing (default: false)'
     required: false
+    default: 'false'
   target:
     description: 'Target file for the build (optional)'
     required: false

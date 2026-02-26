@@ -41,6 +41,7 @@ inputs:
   no-pub:
     description: "Whether to skip running 'flutter pub get' before the build (default: false)"
     required: false
+    default: 'false'
   target:
     description: 'The main entry-point file of the application (default: lib/main.dart)'
     required: false
