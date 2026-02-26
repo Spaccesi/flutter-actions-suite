@@ -62,17 +62,18 @@ runs:
 
               if [ -n "$UNTRANSLATED_FILE" ]; then
                 if [ -f "$UNTRANSLATED_FILE" ]; then
-                   if [ -s "$UNTRANSLATED_FILE" ]; then
-                     echo "::warning::Untranslated messages found in $PACKAGE_DIR/$UNTRANSLATED_FILE"
-                     cat "$UNTRANSLATED_FILE"
-                     
-                     HAS_ERROR=true
-                     echo "::error::Marking as failed due to untranslated messages"
-                   else
-                     echo "Untranslated messages file is empty. Good job!"
-                   fi
+                  content=$(cat untranslated_messages.json)
+                  if [ -s "$UNTRANSLATED_FILE" && "$content" != "{}" ]; then
+                    echo "::warning::Untranslated messages found in $PACKAGE_DIR/$UNTRANSLATED_FILE"
+                    cat "$UNTRANSLATED_FILE"
+                    
+                    HAS_ERROR=true
+                    echo "::error::Marking as failed due to untranslated messages"
+                  else
+                    echo "Untranslated messages file is empty. Good job!"
+                  fi
                 else
-                   echo "No untranslated messages file generated."
+                  echo "No untranslated messages file generated."
                 fi
               fi
             fi
