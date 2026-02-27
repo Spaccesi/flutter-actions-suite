@@ -51,23 +51,16 @@ runs:
         # Set environment variable for the API key file path
         echo "APP_STORE_CONNECT_KEY_PATH=$RUNNER_TEMP/app_store_connect_key/key.json" >> $GITHUB_ENV
 
-    - name: Install App Store Connect CLI
-      shell: bash
-      run: |
-        # Install the App Store Connect CLI using npm
-        npm install -g app-store-connect-cli
-
     - name: Publish to App Store Connect
       shell: bash
       env:
-        APP_ID: ${{ inputs.app-id }}
-        APP_VERSION: ${{ inputs.app-version }}
-        RELEASE_NOTES: ${{ inputs.release-notes }}
+        API_KEY_ID: ${{ inputs.apple-api-key-id }}
+        API_ISSUER_ID: ${{ inputs.apple-api-key-issuer-id }}
+        API_KEY_CONTENT: ${{ inputs.apple-api-key-content }}
       run: |
-        # Publish the app to App Store Connect using the CLI
-        app-store-connect upload \
-          --apiKeyPath $APP_STORE_CONNECT_KEY_PATH \
-          --appId $APP_ID \
-          --version $APP_VERSION \
-          ${ inputs.release-notes && "--release-notes " + inputs.release-notes || '' } \
-          ${ inputs.release-notes-file && "--release-notes-file " + inputs.release-notes-file || '' }
+        # Create private key file
+        mkdir -p ~/.appstoreconnect/private_keys
+        echo "$API_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_$API_KEY_ID.p8
+        
+        # Upload
+        xcrun altool --upload-app --type ios --file build/ios/ipa/*.ipa --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"

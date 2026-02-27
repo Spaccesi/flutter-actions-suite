@@ -49,6 +49,17 @@ inputs:
     description: 'Whether to codesign the application bundle (only available on device builds, default: true)'
     required: false
     default: 'true'
+  export-method:
+    description: |
+      Specify how the IPA will be distributed.
+          [app-store] (default)                              Upload to the App Store.
+          [ad-hoc]                                           Test on designated devices that do not need to be registered with the Apple developer account. Requires a distribution certificate.
+          [development]                                      Test only on development devices registered with the Apple developer account.
+          [enterprise]                                       Distribute an app registered with the Apple Developer Enterprise Program.
+    required: false
+  export-options-plist: 
+    description: Export an IPA with these options. See "xcodebuild -h" for available exportOptionsPlist keys. <ExportOptions.plist>  
+    required: false
 
 runs:
   using: 'composite'
@@ -102,6 +113,8 @@ runs:
           ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
           ${{ inputs.flavor != '' && format('--flavor={0}', inputs.flavor) || '' }} \
           ${{ inputs.target != '' && format('--target={0}', inputs.target) || '' }} \
+          ${{ inputs.export-method != '' && format('--export-method {0}', inputs.export-method) || '' }} \
+          ${{ inputs.export-options-plist != '' && format('--export-options-plist={0}', inputs.export-options-plist) || '' }} \
           ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
           ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
           ${{ inputs.code-sign == 'false' && '--no-codesign' || '' }}
