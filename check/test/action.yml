@@ -45,44 +45,21 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/test.sh
+      shell: bash
+
     - name: Run Tests
+      env:
+        DART_DEFINE: ${{ inputs.dart-define }}
+        DART_DEFINE_FROM_FILE: ${{ inputs.dart-define-from-file }}
+        FLAVOR: ${{ inputs.flavor }}
+        CONCURRENCY: ${{ inputs.concurrency }}
+        TIMEOUT: ${{ inputs.timeout }}
+        IGNORE_TIMEOUTS: ${{ inputs.ignore-timeouts }}
+        RUN_COVERAGE: ${{ inputs.run-coverage }}
+        CREATE_COVERAGE_BADGE: ${{ inputs.create-coverage-badge }}
+        NO_PUB: ${{ inputs.no-pub }}
+        COVERAGE_BADGE_OUTPUT_PATH: ${{ inputs.coverage-badge-output-path }}
+      run: $GITHUB_ACTION_PATH/test.sh
       shell: bash
-      if: inputs.run-coverage == 'false' && inputs.deploy-report == 'none'
-      run: |
-        flutter test . \
-          -r github \
-          --concurrency=${{ inputs.concurrency }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
-          ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
-          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }}
-          ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
-          ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-
-    - name: Run Tests & Coverage
-      if: inputs.run-coverage == 'true' || inputs.deploy-report != 'none'
-      shell: bash
-      run: |
-        flutter test . \
-          -r github \
-          --coverage \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          --concurrency=${{ inputs.concurrency }} \
-          ${{ inputs.dart-define != '' && '--dart-define=${{ inputs.dart-define }}' || '' }} \
-          ${{ inputs.dart-define-from-file != '' && '--dart-define-from-file=${{ inputs.dart-define-from-file }}' || '' }} \
-          ${{ inputs.flavor != '' && '--flavor=${{ inputs.flavor }}' || '' }} \
-          ${{ inputs.timeout != '60s' && '--timeout=${{ inputs.timeout }}' || '' }} \
-          ${{ inputs.ignore-timeouts == 'true' && '--ignore-timeouts' || '' }} \
-
-    - name: Install genhtml
-      shell: bash
-      if: inputs.create-coverage-badge == 'true'
-      run: |
-        sudo apt-get update
-        sudo apt-get install lcov
-
-    - name: Generate Coverage report
-      shell: bash
-      if: inputs.create-coverage-badge == 'true'
-      run: |
-        genhtml coverage/lcov.info -o ${{ inputs.coverage-badge-output-path }}

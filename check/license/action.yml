@@ -16,6 +16,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/license.sh
+      shell: bash
+
     - name: Check licenses
       env:
         COMPATIBLE_LECENSES_CONF_PATH: ${{ inputs.compatible-licenses-conf-path }}

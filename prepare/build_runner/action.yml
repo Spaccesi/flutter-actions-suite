@@ -4,6 +4,10 @@ description: 'Automatically discovers and runs code generation using build_runne
 runs:
   using: 'composite'
   steps:
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/build_runner.sh
+      shell: bash
+
     - name: Run Build Runner
-      run: build_runner.sh
+      run: $GITHUB_ACTION_PATH/build_runner.sh
       shell: bash

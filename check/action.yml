@@ -61,6 +61,10 @@ inputs:
     description: 'Whether to create a coverage badge based on the generated coverage report. The badge will be created in the root of the repository with the name "coverage_badge.svg".'
     required: false
     default: 'false'
+  coverage-badge-output-path:
+    description: 'The path where the coverage badge will be created. This input is only used if create-coverage-badge is set to true. The default value is "coverage/html" in the root of the repository.'
+    required: false
+    default: 'coverage/html'
   no-pub:
     description: 'Whether to skip running pub get before running tests. Set to true if you have already run pub get in a previous step or if you are using a custom pub cache.'
     required: false
@@ -69,29 +73,41 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Add permissions
+      run: |
+        chmod +x $GITHUB_ACTION_PATH/check/analyze.sh
+        chmod +x $GITHUB_ACTION_PATH/check/license.sh
+        chmod +x $GITHUB_ACTION_PATH/check/test.sh
+      shell: bash
+
     - name: Run Analyze
       if: ${{ inputs.run-analyze == 'true' }}
-      uses: Spaccesi/flutter-actions-suite/check/analyze@main
-      with:
-        analyze-fails-if-infos: ${{ inputs.analyze-fails-if-infos }}
-        analyze-fails-if-warnings: ${{ inputs.analyze-fails-if-warnings }}
-
+      shell: bash
+      env:
+        ANALYZE_FAILS_IF_INFOS: ${{ inputs.analyze-fails-if-infos }}
+        ANALYZE_FAILS_IF_WARNINGS: ${{ inputs.analyze-fails-if-warnings }}
+      run: $GITHUB_ACTION_PATH/check/analyze.sh
+      
     - name: Check Licenses
       if: ${{ inputs.run-license == 'true' }}
-      uses: Spaccesi/flutter-actions-suite/check/license@main
-      with:
-        compatible-licenses-conf-path: ${{ inputs.compatible-licenses-conf-path }}
-
+      shell: bash
+      env:
+        COMPATIBLE_LICENSES_CONF_PATH: ${{ inputs.compatible-licenses-conf-path }}
+      run: $GITHUB_ACTION_PATH/check/license.sh
+    
     - name: Run Tests
       if: ${{ inputs.run-test == 'true' }}
-      uses: Spaccesi/flutter-actions-suite/check/test@main
-      with:
-        dart-define: ${{ inputs.dart-define }}
-        dart-define-from-file: ${{ inputs.dart-define-from-file }}
-        flavor: ${{ inputs.flavor }}
-        concurrency: ${{ inputs.concurrency }}
-        timeout: ${{ inputs.timeout }}
-        ignore-timeouts: ${{ inputs.ignore-timeouts }}
-        run-coverage: ${{ inputs.run-coverage }}
-        create-coverage-badge: ${{ inputs.create-coverage-badge }}
-        no-pub: ${{ inputs.no-pub }}
+      shell: bash
+      run: $GITHUB_ACTION_PATH/check/test.sh
+      env:
+        DART_DEFINE: ${{ inputs.dart-define }}
+        DART_DEFINE_FROM_FILE: ${{ inputs.dart-define-from-file }}
+        FLAVOR: ${{ inputs.flavor }}
+        CONCURRENCY: ${{ inputs.concurrency }}
+        TIMEOUT: ${{ inputs.timeout }}
+        IGNORE_TIMEOUTS: ${{ inputs.ignore-timeouts }}
+        RUN_COVERAGE: ${{ inputs.run-coverage }}
+        CREATE_COVERAGE_BADGE: ${{ inputs.create-coverage-badge }}
+        NO_PUB: ${{ inputs.no-pub }}
+        COVERAGE_BADGE_OUTPUT_PATH: ${{ inputs.coverage-badge-output-path }}
+     

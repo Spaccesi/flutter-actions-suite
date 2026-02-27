@@ -17,7 +17,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Change permissions
+    - name: Add permissions
       run: chmod +x $GITHUB_ACTION_PATH/analyze.sh
       shell: bash
       
