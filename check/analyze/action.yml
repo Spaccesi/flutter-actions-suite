@@ -22,5 +22,5 @@ runs:
         ANALYZE_FAILS_IF_INFOS: ${{ inputs.analyze-fails-if-infos }}
         ANALYZE_FAILS_IF_WARNINGS: ${{ inputs.analyze-fails-if-warnings }}
         NO_PUB: ${{ inputs.no-pub }}
-      run: analyze.sh
+      run: $GITHUB_ACTION_PATH/analyze.sh
       shell: bash
