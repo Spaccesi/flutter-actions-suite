@@ -1,13 +1,13 @@
 name: Build macos app
 description: |
-  Build the macOS app using Flutter. This action requires a base64 encoded macOS signing 
-  certificate (p12 file) to be provided as input, which will be used to sign the app during 
-  the build process. The action also supports various build options such as build mode, flavor, 
-  dart defines, obfuscation, and more. The built app will be signed with the provided certificate, 
-  allowing it to be installed on macOS devices or submitted to the Mac App Store. 
+  Build the macOS app using Flutter. This action requires a base64 encoded macOS signing
+  certificate (p12 file) to be provided as input, which will be used to sign the app during
+  the build process. The action also supports various build options such as build mode, flavor,
+  dart defines, obfuscation, and more. The built app will be signed with the provided certificate,
+  allowing it to be installed on macOS devices or submitted to the Mac App Store.
 
-  IMPORTANT!: This action is intended for building macOS apps on a macOS runner, as it relies on 
-  Xcode and the Apple code signing tools. It will not work on non-macOS runners. 
+  IMPORTANT!: This action is intended for building macOS apps on a macOS runner, as it relies on
+  Xcode and the Apple code signing tools. It will not work on non-macOS runners.
   Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
   macos-distribution-certificate-base64:
@@ -46,10 +46,10 @@ inputs:
     description: 'The main entry-point file of the application (default: lib/main.dart)'
     required: false
   build-number:
-    description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
+    description: "An identifier used as an internal version number."
     required: false
   build-name:
-    description: "A 'x.y.z' string used as the version number shown to users. For each new version of your app, you will provide a version number to differentiate it from previous versions. On Android it is used as 'versionName'. "
+    description: "A 'x.y.z' string used as the version number shown to users."
     required: false
   code-sign:
     description: 'Whether to codesign the application bundle (only available on device builds, default: true)'
@@ -59,99 +59,25 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Download macOS signing certificate
-      id: macos_signing_certificate
-      if: ${{ inputs.build-mode != 'debug' }}
-      uses: timheuer/base64-to-file@v1
-      with:
-        fileName: macos-signing-certificate.p12
-        encodedString: ${{ inputs.macos-distribution-certificate-base64 }}
-
-    - name: Install Apple Certificate
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/macos.sh
       shell: bash
-      env:
-        BUILD_CERTIFICATE_BASE64: ${{ inputs.macos-distribution-certificate-base64 }}
-        P12_PASSWORD: ${{ inputs.macos-distribution-certificate-password }}
-        KEYCHAIN_PASSWORD: 'dist_password'
-      run: |
-        # create variables
-        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-        # import certificate and provisioning profile from secrets
-        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-        # create temporary keychain
-        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-        # import certificate to keychain
-        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-        security list-keychain -d user -s $KEYCHAIN_PATH
-
-    - name: Install Installer Certificate
-      shell: bash
-      env:
-        INSTALLER_CERTIFICATE_BASE64: ${{ inputs.macos-installer-certificate-base64 }}
-        P12_PASSWORD: ${{ inputs.macos-installer-certificate-password }}
-        KEYCHAIN_PASSWORD: 'dist_password'
-      run: |
-        # create variables
-        CERTIFICATE_PATH=$RUNNER_TEMP/build_installer_certificate.p12
-        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-        # import certificate from secrets
-        echo -n "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-        echo "Checking if installer certificate exists..."
-        ls -l $CERTIFICATE_PATH
-
-        # import certificate to keychain
-        # Using -T /usr/bin/codesign to explicitly allow usage
-        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k $KEYCHAIN_PATH
-
-    - name: Debug Keychain Identities (Full)
-      shell: bash
-      run: |
-        echo "--- Identities (codesigning) ---"
-        security find-identity -v -p codesigning
-        echo "--- All Keychain Items ---"
-        # dump-keychain might be verbose but necessary here
-        security dump-keychain $RUNNER_TEMP/app-signing.keychain-db || true
-
-    - name: Install Provisioning Profile
-      shell: bash
-      env:
-        PROVISIONING_PROFILE_BASE64: ${{ inputs.macos-provisioning-profile-base64 }}
-      run: |
-        # create variables
-        PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
-
-        # import provisioning profile from secrets
-        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-
-        # apply provisioning profile
-        mkdir -p ~/Library/ProvisioningProfiles
-        cp $PP_PATH ~/Library/ProvisioningProfiles
-
-        # Extract UUID and copy with UUID name to ensure detection
-        UUID=`/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< $(security cms -D -i $PP_PATH)`
-        cp $PP_PATH ~/Library/ProvisioningProfiles/$UUID.provisionprofile
-
-        echo "PP_PATH=$PP_PATH" >> $GITHUB_ENV
-        echo "profile_uuid=$UUID" >> $GITHUB_ENV
-
-    - uses: subosito/flutter-action@v2
 
     - name: Build macOS app
+      env:
+        MACOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ inputs.macos-distribution-certificate-base64 }}
+        MACOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ inputs.macos-distribution-certificate-password }}
+        MACOS_INSTALLER_CERTIFICATE_BASE64: ${{ inputs.macos-installer-certificate-base64 }}
+        MACOS_INSTALLER_CERTIFICATE_PASSWORD: ${{ inputs.macos-installer-certificate-password }}
+        MACOS_PROVISIONING_PROFILE_BASE64: ${{ inputs.macos-provisioning-profile-base64 }}
+        BUILD_MODE: ${{ inputs.build-mode }}
+        FLAVOR: ${{ inputs.flavor }}
+        DART_DEFINE: ${{ inputs.dart-define }}
+        OBFUSCATE: ${{ inputs.obfuscate }}
+        NO_PUB: ${{ inputs.no-pub }}
+        TARGET: ${{ inputs.target }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        CODE_SIGN: ${{ inputs.code-sign }}
+      run: $GITHUB_ACTION_PATH/macos.sh
       shell: bash
-      run: |
-        flutter build macos --${{ inputs.build-mode }} \
-          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
-          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
-          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
-          ${{ inputs.flavor != '' && format('--flavor={0}', inputs.flavor) || '' }} \
-          ${{ inputs.target != '' && format('--target={0}', inputs.target) || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }}

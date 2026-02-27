@@ -1,14 +1,14 @@
 name: Build android
 description: |
-  Build the Android app using Flutter. This action requires a base64 
-  encoded Android keystore file to be provided as input, which will 
-  be used to sign the app during the build process. The action also 
-  supports various build options such as build type (apk or appbundle), 
-  build mode, flavor, dart defines, obfuscation, and more. The built 
-  app will be signed with the provided keystore, allowing it to be 
+  Build the Android app using Flutter. This action requires a base64
+  encoded Android keystore file to be provided as input, which will
+  be used to sign the app during the build process. The action also
+  supports various build options such as build type (apk or appbundle),
+  build mode, flavor, dart defines, obfuscation, and more. The built
+  app will be signed with the provided keystore, allowing it to be
   installed on Android devices or submitted to the Google Play Store.
 
-  IMPORTANT!: This action is intended for building Android apps on a Linux 
+  IMPORTANT!: This action is intended for building Android apps on a Linux
   runner, as it relies on the Android SDK and Java.
 inputs:
   android-store-file-base64:
@@ -23,14 +23,6 @@ inputs:
   android-key-alias:
     description: 'Alias for the key in the Android keystore'
     required: true
-  # java-version:
-  #   description: 'Version of Java to use for the Android build (default: 17)'
-  #   required: false
-  #   default: '17'
-  # java-distribution:
-  #   description: 'Java distribution to use for the Android build (default: zulu)'
-  #   required: false
-  #   default: 'zulu'
   flavor:
     description: 'Flutter flavor to build (optional)'
     required: false
@@ -64,35 +56,29 @@ inputs:
   obfuscate:
     description: 'Whether to obfuscate the build (default: false)'
     required: false
+
 runs:
   using: 'composite'
   steps:
-    - name: Decode keystore and create key.properties
-      if: ${{ inputs.build-mode != 'debug' }}
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/android.sh
       shell: bash
-      run: |
-        KEYSTORE_PATH="${RUNNER_TEMP}/upload-keystore.jks"
-        echo "${{ inputs.android-store-file-base64 }}" | base64 --decode > "$KEYSTORE_PATH"
-        echo "storeFile=$KEYSTORE_PATH" > android/key.properties
-        echo "storePassword=${{ inputs.android-store-password }}" >> android/key.properties
-        echo "keyPassword=${{ inputs.android-key-password }}" >> android/key.properties
-        echo "keyAlias=${{ inputs.android-key-alias }}" >> android/key.properties
 
-    # - uses: actions/setup-java@v4
-    #   with:
-    #     distribution: '${{ inputs.java-distribution }}'
-    #     java-version: '${{ inputs.java-version }}'
-
-    - name: Start Android Release Build
+    - name: Build Android app
+      env:
+        ANDROID_STORE_FILE_BASE64: ${{ inputs.android-store-file-base64 }}
+        ANDROID_STORE_PASSWORD: ${{ inputs.android-store-password }}
+        ANDROID_KEY_PASSWORD: ${{ inputs.android-key-password }}
+        ANDROID_KEY_ALIAS: ${{ inputs.android-key-alias }}
+        FLAVOR: ${{ inputs.flavor }}
+        DART_DEFINE: ${{ inputs.dart-define }}
+        DART_DEFINE_FROM_FILE: ${{ inputs.dart-define-from-file }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        BUILD_MODE: ${{ inputs.build-mode }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        NO_PUB: ${{ inputs.no-pub }}
+        TARGET: ${{ inputs.target }}
+        OBFUSCATE: ${{ inputs.obfuscate }}
+      run: $GITHUB_ACTION_PATH/android.sh
       shell: bash
-      run: |
-        flutter build ${{ inputs.build-type }} \
-          --${{ inputs.build-mode }} \
-          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
-          ${{ inputs.dart-define-from-file != '' && format('--dart-define-from-file={0}', inputs.dart-define-from-file) || '' }} \
-          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
-          ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
-          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.flavor && format('--flavor={0}', inputs.flavor) || '' }} \
-          ${{ inputs.obfuscate == 'false' && '--no-obfuscate' || '' }}

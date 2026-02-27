@@ -1,0 +1,24 @@
+if [ "$BUILD_MODE" != 'debug' ]; then
+  echo "▶️ Decoding keystore"
+  KEYSTORE_PATH="${RUNNER_TEMP}/upload-keystore.jks"
+  echo "$ANDROID_STORE_FILE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+  echo "storeFile=$KEYSTORE_PATH" > android/key.properties
+  echo "storePassword=$ANDROID_STORE_PASSWORD" >> android/key.properties
+  echo "keyPassword=$ANDROID_KEY_PASSWORD" >> android/key.properties
+  echo "keyAlias=$ANDROID_KEY_ALIAS" >> android/key.properties
+  echo "✅ Keystore decoded and key.properties created."
+fi
+
+FLAGS="--$BUILD_MODE"
+[ "$DART_DEFINE" != '' ] && FLAGS="$FLAGS --dart-define=$DART_DEFINE"
+[ "$DART_DEFINE_FROM_FILE" != '' ] && FLAGS="$FLAGS --dart-define-from-file=$DART_DEFINE_FROM_FILE"
+[ "$BUILD_NUMBER" != '' ] && FLAGS="$FLAGS --build-number=$BUILD_NUMBER"
+[ "$BUILD_NAME" != '' ] && FLAGS="$FLAGS --build-name=$BUILD_NAME"
+[ "$TARGET" != '' ] && FLAGS="$FLAGS -t $TARGET"
+[ "$NO_PUB" == 'true' ] && FLAGS="$FLAGS --no-pub"
+[ "$FLAVOR" != '' ] && FLAGS="$FLAGS --flavor=$FLAVOR"
+[ "$OBFUSCATE" != 'true' ] && FLAGS="$FLAGS --no-obfuscate"
+
+echo "▶️ Running flutter build $BUILD_TYPE with flags: $FLAGS"
+flutter build "$BUILD_TYPE" $FLAGS
+echo "✅ Android build complete."
