@@ -24,7 +24,8 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: microsoft/setup-msstore-cli@v1.3
+    - name: Install MS Store CLI
+      uses: microsoft/setup-msstore-cli@v1.3
 
     - name: Configure MS Store CLI
       shell: bash

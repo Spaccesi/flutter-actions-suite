@@ -23,10 +23,12 @@ runs:
 
     - name: Run Build Runner
       if: ${{ inputs.run-build-runner == 'true' }}
-      uses: Spaccesi/flutter-actions-suite/prepare/build_runner@main
+      shell: bash
+      run: build_runner/build_runner.sh
 
     - name: Run gen-l10n
       if: ${{ inputs.run-gen-l10n == 'true' }}
-      uses: Spaccesi/flutter-actions-suite/prepare/gen-l10n@main
-      with:
-        fails-if-untranslated: ${{ inputs.gen-l10n-fails-if-untranslated }}
+      env: 
+        FAILS_IF_UNTRANSLATED: ${{ inputs.gen-l10n-fails-if-untranslated }}
+      run: gen-l10n/gen-l10n.sh
+      shell: bash

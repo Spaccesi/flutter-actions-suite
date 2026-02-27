@@ -18,9 +18,9 @@ runs:
   using: 'composite'
   steps:
     - name: Run Analysis
-      run: |
-        flutter analyze . \
-          ${{ inputs.analyze-fails-if-infos == 'false' && '--no-fatal-infos' || '' }} \
-          ${{ inputs.analyze-fails-if-warnings == 'false' && '--no-fatal-warnings' || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }}
+      env:
+        ANALYZE_FAILS_IF_INFOS: ${{ inputs.analyze-fails-if-infos }}
+        ANALYZE_FAILS_IF_WARNINGS: ${{ inputs.analyze-fails-if-warnings }}
+        NO_PUB: ${{ inputs.no-pub }}
+      run: analyze.sh
       shell: bash
