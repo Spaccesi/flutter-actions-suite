@@ -17,6 +17,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Change permissions
+      run: chmod +x $GITHUB_ACTION_PATH/analyze.sh
+      shell: bash
+      
     - name: Run Analysis
       env:
         ANALYZE_FAILS_IF_INFOS: ${{ inputs.analyze-fails-if-infos }}
