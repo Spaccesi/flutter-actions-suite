@@ -27,7 +27,7 @@ runs:
         fi
 
         # Extract the latest release note from the changelog
-        RELEASE_NOTE=$(awk '/^# /{flag=1; next} /^# /{flag=0} flag' "${{ inputs.changelog-path }}" | sed '$d')
+        RELEASE_NOTE=$(awk '/^# /{if(flag) exit; flag=1; next} flag' "${{ inputs.changelog-path }}")
         if [ -z "$RELEASE_NOTE" ]; then
           echo "🚨 No release note found in the changelog."
           if [[ "${{ inputs.fails-on-missing-changelog }}" == "true" ]]; then
