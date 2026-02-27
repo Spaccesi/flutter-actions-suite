@@ -192,7 +192,11 @@ jobs:
       - name: Run build/macos
         uses: ./build/macos
         with:
-          macos-signing-certificate-base64: ''
+          macos-distribution-certificate-base64: ''
+          macos-installer-certificate-base64: ''
+          macos-installer-certificate-password: ''
+          macos-provisioning-profile-base64: ''
+          macos-distribution-certificate-password: ''
           build-mode: 'debug' # Avoid long release build for testing
 
   # ── build/ios ──────────────────────────────────────────────────────────────
@@ -214,8 +218,8 @@ jobs:
       - name: Run build/ios
         uses: ./build/ios
         with:
-          ios-signing-certificate-base64: ''
           ios-provisioning-profile-base64: ''
-          ios-signing-certificate-password: ''
+          ios-distribution-certificate-base64: ''
+          ios-distribution-certificate-password: ''
           build-mode: 'debug' # Avoid long release build for testing
           code-sign: 'false' # Avoid code signing for testing

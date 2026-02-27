@@ -23,17 +23,14 @@ inputs:
   android-key-alias:
     description: 'Alias for the key in the Android keystore'
     required: true
-  android-local-properties-file:
-    description: 'Content of the local.properties file for Android build'
-    required: true
-  java-version:
-    description: 'Version of Java to use for the Android build (default: 17)'
-    required: false
-    default: '17'
-  java-distribution:
-    description: 'Java distribution to use for the Android build (default: zulu)'
-    required: false
-    default: 'zulu'
+  # java-version:
+  #   description: 'Version of Java to use for the Android build (default: 17)'
+  #   required: false
+  #   default: '17'
+  # java-distribution:
+  #   description: 'Java distribution to use for the Android build (default: zulu)'
+  #   required: false
+  #   default: 'zulu'
   flavor:
     description: 'Flutter flavor to build (optional)'
     required: false
@@ -70,33 +67,21 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Download Android keystore
+    - name: Decode keystore and create key.properties
       if: ${{ inputs.build-mode != 'debug' }}
-      id: android_keystore
-      uses: timheuer/base64-to-file@v1
-      with:
-        fileName: upload-keystore.jks
-        encodedString: ${{ inputs.android-store-file-base64 }}
-
-    - name: Create key.properties file
       shell: bash
-      if: ${{ inputs.build-mode != 'debug' }}
       run: |
-        echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
+        KEYSTORE_PATH="${RUNNER_TEMP}/upload-keystore.jks"
+        echo "${{ inputs.android-store-file-base64 }}" | base64 --decode > "$KEYSTORE_PATH"
+        echo "storeFile=$KEYSTORE_PATH" > android/key.properties
         echo "storePassword=${{ inputs.android-store-password }}" >> android/key.properties
         echo "keyPassword=${{ inputs.android-key-password }}" >> android/key.properties
         echo "keyAlias=${{ inputs.android-key-alias }}" >> android/key.properties
 
-    - name: Create local.properties file
-      shell: bash
-      if: ${{ inputs.build-mode != 'debug' }}
-      run: |
-        echo '${{ inputs.android-local-properties-file }}' > android/local.properties
-
-    - uses: actions/setup-java@v4
-      with:
-        distribution: '${{ inputs.java-distribution }}'
-        java-version: '${{ inputs.java-version }}'
+    # - uses: actions/setup-java@v4
+    #   with:
+    #     distribution: '${{ inputs.java-distribution }}'
+    #     java-version: '${{ inputs.java-version }}'
 
     - name: Start Android Release Build
       shell: bash
