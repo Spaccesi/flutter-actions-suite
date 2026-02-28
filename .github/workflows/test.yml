@@ -171,7 +171,6 @@ jobs:
           android-store-password: ''
           android-key-password: ''
           android-key-alias: ''
-          android-local-properties-file: ''
           build-mode: 'debug' # Avoid long release build for testing
 
   # ── build/macos ────────────────────────────────────────────────────────────
