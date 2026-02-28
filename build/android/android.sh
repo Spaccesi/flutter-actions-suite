@@ -1,8 +1,8 @@
 if [ "$BUILD_MODE" != 'debug' ]; then
   echo "▶️ Decoding keystore"
-  KEYSTORE_PATH="${RUNNER_TEMP}/upload-keystore.jks"
+  KEYSTORE_PATH="${RUNNER_TEMP}/android/upload-keystore.jks"
   echo "$ANDROID_STORE_FILE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
-  echo "storeFile=$KEYSTORE_PATH" > android/key.properties
+  echo "storeFile=../upload-keystore.jks" > android/key.properties
   echo "storePassword=$ANDROID_STORE_PASSWORD" >> android/key.properties
   echo "keyPassword=$ANDROID_KEY_PASSWORD" >> android/key.properties
   echo "keyAlias=$ANDROID_KEY_ALIAS" >> android/key.properties
