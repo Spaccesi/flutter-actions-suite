@@ -1,6 +1,6 @@
 if [ "$BUILD_MODE" != 'debug' ]; then
   echo "▶️ Decoding keystore"
-  KEYSTORE_PATH="${RUNNER_TEMP}/android/upload-keystore.jks"
+  KEYSTORE_PATH="android/upload-keystore.jks"
   echo "$ANDROID_STORE_FILE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
   echo "storeFile=../upload-keystore.jks" > android/key.properties
   echo "storePassword=$ANDROID_STORE_PASSWORD" >> android/key.properties
@@ -17,7 +17,7 @@ FLAGS="--$BUILD_MODE"
 [ "$TARGET" != '' ] && FLAGS="$FLAGS -t $TARGET"
 [ "$NO_PUB" == 'true' ] && FLAGS="$FLAGS --no-pub"
 [ "$FLAVOR" != '' ] && FLAGS="$FLAGS --flavor=$FLAVOR"
-[ "$OBFUSCATE" != 'true' ] && FLAGS="$FLAGS --no-obfuscate"
+[ "$OBFUSCATE" == 'true' ] && FLAGS="$FLAGS --no-obfuscate"
 
 echo "▶️ Running flutter build $BUILD_TYPE with flags: $FLAGS"
 flutter build "$BUILD_TYPE" $FLAGS
