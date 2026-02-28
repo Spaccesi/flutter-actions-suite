@@ -18,25 +18,8 @@ runs:
     - name: Create release note from changelog
       id: create_release_note
       shell: bash
-      run: |
-        if [ ! -f "${{ inputs.changelog-path }}" ]; then
-          echo "🚨 Changelog file not found at path: ${{ inputs.changelog-path }}"
-          if [[ "${{ inputs.fails-on-missing-changelog }}" == "true" ]]; then
-            exit 1
-          fi
-        fi
-
-        # Extract the latest release note from the changelog
-        RELEASE_NOTE=$(awk '/^# /{if(flag) exit; flag=1; next} flag' "${{ inputs.changelog-path }}")
-        if [ -z "$RELEASE_NOTE" ]; then
-          echo "🚨 No release note found in the changelog."
-          if [[ "${{ inputs.fails-on-missing-changelog }}" == "true" ]]; then
-            exit 1
-          fi
-        fi
-
-        echo "Release note extracted from changelog:"
-        echo "$RELEASE_NOTE"
-
-        # Set the release note as an output variable
-        echo "::set-output name=release_note::$RELEASE_NOTE"
+      env:
+        CHANGELOG_PATH: ${{ inputs.changelog-path }}
+        FAILS_ON_MISSING_CHANGELOG: ${{ inputs.fails-on-missing-changelog }}
+      run: release-note-from-changelog.sh
+        

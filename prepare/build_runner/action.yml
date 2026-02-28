@@ -4,33 +4,10 @@ description: 'Automatically discovers and runs code generation using build_runne
 runs:
   using: 'composite'
   steps:
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/build_runner.sh
+      shell: bash
+
     - name: Run Build Runner
-      run: |
-        # Find all packages in the repository
-        PACKAGES=$(find . -mindepth 1 -maxdepth 3 -type f -name "pubspec.yaml" | sed 's|/pubspec.yaml||')
-
-        if [ -z "$PACKAGES" ]; then
-          echo "No packages found with pubspec.yaml"
-          exit 1
-        fi
-
-        # Run build_runner on each package
-        for PACKAGE_DIR in $PACKAGES; do
-          echo "::group::Running build_runner in $PACKAGE_DIR"
-
-          # Check if the package has build_runner dependency
-          if grep -q "build_runner:" "$PACKAGE_DIR/pubspec.yaml"; then
-            cd "$PACKAGE_DIR"
-            echo "Running: dart run build_runner build --delete-conflicting-outputs"
-            dart run build_runner build --delete-conflicting-outputs
-            cd - > /dev/null
-            echo "✓ Completed build_runner for $PACKAGE_DIR"
-          else
-            echo "⊘ Skipping $PACKAGE_DIR (no build_runner dependency)"
-          fi
-
-          echo "::endgroup::"
-        done
-
-        echo "Build runner completed for all packages"
+      run: $GITHUB_ACTION_PATH/build_runner.sh
       shell: bash

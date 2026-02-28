@@ -1,11 +1,11 @@
 name: Build web app
 description: |
-  This action builds the web version of the Flutter app using 
-  the `flutter build web` command. You can customize the build 
-  by providing various inputs such as build mode, build name, build number, 
-  dart defines, and more. The built web app will be output in the specified 
+  This action builds the web version of the Flutter app using
+  the `flutter build web` command. You can customize the build
+  by providing various inputs such as build mode, build name, build number,
+  dart defines, and more. The built web app will be output in the specified
   directory (default is `build/web`).
-  The action also supports additional web-specific options such as base href, 
+  The action also supports additional web-specific options such as base href,
   static assets URL, PWA strategy, and WebAssembly support.
 inputs:
   dart-define:
@@ -13,7 +13,7 @@ inputs:
     required: false
     default: ''
   build-number:
-    description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
+    description: "An identifier used as an internal version number."
     required: false
     default: ''
   build-mode:
@@ -37,32 +37,36 @@ inputs:
     required: false
     default: 'false'
   base-href:
-    description: "Overrides the href attribute of the <base> tag in web/index.html. No change is done to web/index.html file if this flag is not provided. The value has to start and end with a slash '/'. For more information: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base"
+    description: "Overrides the href attribute of the <base> tag in web/index.html. No change is done to web/index.html file if this flag is not provided. The value has to start and end with a slash '/'."
     required: false
     default: ''
   static-assets-url:
-    description: "Used when serving the static assets from a different domain the application is hosted on. The value has to end with a slash '/'. When this is set, it will replace all $FLUTTER_STATIC_ASSETS_URL in web/index.html for the given value."
+    description: "Used when serving the static assets from a different domain the application is hosted on. The value has to end with a slash '/'."
     required: false
     default: ''
   wasm:
-    description: 'Whether to build the web app with WebAssembly (default: false). See https://flutter.dev/to/wasm for more information.'
+    description: 'Whether to build the web app with WebAssembly (default: false).'
     required: false
     default: 'false'
 
 runs:
   using: 'composite'
   steps:
-    - name: Build web app
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/web.sh
       shell: bash
-      run: |
-        flutter build web \
-          --${{ inputs.build-mode }} \
-          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
-          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
-          ${{ inputs.target != '' && format('-t {0}', inputs.target) || '' }} \
-          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.base-href != '' && format('--base-href={0}', inputs.base-href) || '' }} \
-          ${{ inputs.static-assets-url != '' && format('--static-assets-url={0}', inputs.static-assets-url) || '' }} \
-          ${{ inputs.wasm == 'true' && '--wasm' || '' }} \
-          --output=${{ inputs.output || 'build/web' }}
+
+    - name: Build web app
+      env:
+        BUILD_MODE: ${{ inputs.build-mode }}
+        DART_DEFINE: ${{ inputs.dart-define }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        TARGET: ${{ inputs.target }}
+        OUTPUT: ${{ inputs.output }}
+        NO_PUB: ${{ inputs.no-pub }}
+        BASE_HREF: ${{ inputs.base-href }}
+        STATIC_ASSETS_URL: ${{ inputs.static-assets-url }}
+        WASM: ${{ inputs.wasm }}
+      run: $GITHUB_ACTION_PATH/web.sh
+      shell: bash

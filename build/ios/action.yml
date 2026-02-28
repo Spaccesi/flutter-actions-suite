@@ -1,13 +1,13 @@
 name: Build ios app
 description: |
-  Build the iOS app using Flutter. This action requires a base64 encoded iOS signing 
-  certificate (p12 file) to be provided as input, which will be used to sign the app during 
-  the build process. The action also supports various build options such as build mode, flavor, 
-  dart defines, obfuscation, and more. The built app will be signed with the provided certificate, 
-  allowing it to be installed on iOS devices or submitted to the App Store. 
+  Build the iOS app using Flutter. This action requires a base64 encoded iOS signing
+  certificate (p12 file) to be provided as input, which will be used to sign the app during
+  the build process. The action also supports various build options such as build mode, flavor,
+  dart defines, obfuscation, and more. The built app will be signed with the provided certificate,
+  allowing it to be installed on iOS devices or submitted to the App Store.
 
-  IMPORTANT!: This action is intended for building iOS apps on a macOS runner, as it relies on 
-  Xcode and the Apple code signing tools. It will not work on non-macOS runners. 
+  IMPORTANT!: This action is intended for building iOS apps on a macOS runner, as it relies on
+  Xcode and the Apple code signing tools. It will not work on non-macOS runners.
   Make sure to use this action in a workflow that runs on a macOS runner.
 inputs:
   ios-distribution-certificate-base64:
@@ -40,10 +40,10 @@ inputs:
     description: 'The main entry-point file of the application (default: lib/main.dart)'
     required: false
   build-number:
-    description: "An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as 'versionCode'. On Xcode builds it is used as 'CFBundleVersion'. On Windows it is used as the build suffix for the product and file versions."
+    description: "An identifier used as an internal version number."
     required: false
   build-name:
-    description: "A 'x.y.z' string used as the version number shown to users. For each new version of your app, you will provide a version number to differentiate it from previous versions. On Android it is used as 'versionName'. "
+    description: "A 'x.y.z' string used as the version number shown to users."
     required: false
   code-sign:
     description: 'Whether to codesign the application bundle (only available on device builds, default: true)'
@@ -57,64 +57,32 @@ inputs:
           [development]                                      Test only on development devices registered with the Apple developer account.
           [enterprise]                                       Distribute an app registered with the Apple Developer Enterprise Program.
     required: false
-  export-options-plist: 
-    description: Export an IPA with these options. See "xcodebuild -h" for available exportOptionsPlist keys. <ExportOptions.plist>  
+  export-options-plist:
+    description: Export an IPA with these options. See "xcodebuild -h" for available exportOptionsPlist keys.
     required: false
 
 runs:
   using: 'composite'
   steps:
-    - name: Install Apple Certificate
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/ios.sh
       shell: bash
-      if: ${{ inputs.code-sign == 'true' }}
-      env:
-        BUILD_CERTIFICATE_BASE64: ${{ inputs.ios-signing-certificate-base64 }}
-        P12_PASSWORD: ${{ inputs.ios-signing-certificate-password }}
-        KEYCHAIN_PASSWORD: 'dist_password'
-      run: |
-        # create variables
-        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-        # import certificate and provisioning profile from secrets
-        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-        # create temporary keychain
-        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-        # import certificate to keychain
-        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-        security list-keychain -d user -s $KEYCHAIN_PATH
-
-    - name: Install Provisioning Profile
-      shell: bash
-      if: ${{ inputs.code-sign == 'true' }}
-      env:
-        PROVISIONING_PROFILE_BASE64: ${{ inputs.ios-provisioning-profile-base64 }}
-      run: |
-        # create variables
-        PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-
-        # import provisioning profile from secrets
-        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-
-        # apply provisioning profile
-        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
 
     - name: Build iOS app
+      env:
+        IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ inputs.ios-distribution-certificate-base64 }}
+        IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ inputs.ios-distribution-certificate-password }}
+        IOS_PROVISIONING_PROFILE_BASE64: ${{ inputs.ios-provisioning-profile-base64 }}
+        BUILD_MODE: ${{ inputs.build-mode }}
+        FLAVOR: ${{ inputs.flavor }}
+        DART_DEFINE: ${{ inputs.dart-define }}
+        OBFUSCATE: ${{ inputs.obfuscate }}
+        NO_PUB: ${{ inputs.no-pub }}
+        TARGET: ${{ inputs.target }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        CODE_SIGN: ${{ inputs.code-sign }}
+        EXPORT_METHOD: ${{ inputs.export-method }}
+        EXPORT_OPTIONS_PLIST: ${{ inputs.export-options-plist }}
+      run: $GITHUB_ACTION_PATH/ios.sh
       shell: bash
-      run: |
-        flutter build ipa --${{ inputs.build-mode }} \
-          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
-          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
-          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
-          ${{ inputs.flavor != '' && format('--flavor={0}', inputs.flavor) || '' }} \
-          ${{ inputs.target != '' && format('--target={0}', inputs.target) || '' }} \
-          ${{ inputs.export-method != '' && format('--export-method {0}', inputs.export-method) || '' }} \
-          ${{ inputs.export-options-plist != '' && format('--export-options-plist={0}', inputs.export-options-plist) || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.obfuscate == 'true' && '--obfuscate' || '' }} \
-          ${{ inputs.code-sign == 'false' && '--no-codesign' || '' }}

@@ -1,12 +1,12 @@
 name: Build windows app
 description: |
-  Build the Windows app using Flutter. This action will install the necessary dependencies for building 
-  Windows apps and then run the `flutter build windows` command with the specified options. You can 
-  provide a build mode, build name, build number, dart defines, and other inputs to customize the 
+  Build the Windows app using Flutter. This action will install the necessary dependencies for building
+  Windows apps and then run the `flutter build windows` command with the specified options. You can
+  provide a build mode, build name, build number, dart defines, and other inputs to customize the
   build. The built Windows app will be output in the `build/windows` directory of your Flutter project.
 
-  IMPORTANT!: This action is intended for building Windows apps on a Windows runner, as it relies on 
-  Windows-specific dependencies and tools. It will not work on non-Windows runners. Make sure to use 
+  IMPORTANT!: This action is intended for building Windows apps on a Windows runner, as it relies on
+  Windows-specific dependencies and tools. It will not work on non-Windows runners. Make sure to use
   this action in a workflow that runs on a Windows runner.
 inputs:
   build-mode:
@@ -14,41 +14,41 @@ inputs:
     required: false
     default: 'release'
   build-number:
-    description: 'An identifier used as an internal version number. Each build must have a unique identifier to differentiate it from previous builds. It is used to determine whether one build is more recent than another, with higher numbers indicating more recent build. On Android it is used as "versionCode". On Xcode builds it is used as "CFBundleVersion". On Windows it is used as the build suffix for the product and file versions.'
+    description: 'An identifier used as an internal version number.'
     required: false
   build-name:
-    description: 'A "x.y.z" string used as the version number shown to users. For each new version of your app, you will provide a version number to differentiate it from previous versions. On Android it is used as "versionName". On Xcode builds it is used as "CFBundleShortVersionString". On Windows it is used as the major, minor, and patch parts of the product and file versions.'
+    description: 'A "x.y.z" string used as the version number shown to users.'
     required: false
   no-pub:
     description: 'Whether to skip running "flutter pub get" before building the app.'
     required: false
     default: 'false'
   obfuscate:
-    description: 'Whether to skip obfuscating the Dart code in a release build. This flag must always be combined with "--split-debug-info" option, the mapping between the values and the original identifiers is stored in the symbol map created in the specified directory. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
+    description: 'Whether to obfuscate the Dart code in a release build.'
     required: false
     default: 'true'
   split-debug-info:
-    description: 'Whether to split the debug info into a separate file in a release build. This flag reduces application size by storing Dart program symbols in a separate file on the host rather than in the application. The value of the flag should be a directory where program symbol files can be stored for later use. These symbol files contain the information needed to symbolize Dart stack traces. For an app built with this flag, the "flutter symbolize" command with the right program symbol file is required to obtain a human readable stack trace.'
+    description: 'Directory to store Dart program symbol files for symbolizing stack traces.'
     required: false
   no-tree-shake-icons:
-    description: 'Whether to tree shake icon fonts so that only glyphs used by the application remain. This flag is enabled by default.'
+    description: 'Whether to disable tree shaking of icon fonts.'
     required: false
     default: 'false'
   no-analyze-size:
-    description: 'Whether to produce additional profile information for artifact output size. This flag is only supported on "--release" builds. When building for Android, a single ABI must be specified at a time with the "--target-platform" flag. When building for iOS, only the symbols from the arm64 architecture are used to analyze code size. By default, the intermediate output files will be placed in a transient directory in the build directory. This can be overridden with the "--code-size-directory" option. This flag cannot be combined with "--split-debug-info".'
+    description: 'Whether to disable additional profile information for artifact output size.'
     required: false
     default: 'false'
   dart-define:
-    description: 'Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors. Multiple defines can be passed by repeating "--dart-define" multiple times.'
+    description: 'Additional key-value pairs available as constants via String.fromEnvironment.'
     required: false
   dart-define-from-file:
-    description: 'The path of a .json or .env file containing key-value pairs that will be available as environment variables. These can be accessed using the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors. Multiple defines can be passed by repeating "--dart-define-from-file" multiple times. Entries from "--dart-define" with identical keys take precedence over entries from these files.'
+    description: 'Path to a .json or .env file containing key-value pairs for dart defines.'
     required: false
   target:
-    description: 'The main entry-point file of the application, as run on the device. If the "--target" option is omitted, but a file name is provided on the command line, then that is used instead. (defaults to "lib/main.dart")'
+    description: 'The main entry-point file of the application (defaults to "lib/main.dart")'
     required: false
   track-widget-creation:
-    description: 'Whether to track widget creation locations. This enables features such as the widget inspector. This parameter is only functional in debug mode (i.e. when compiling JIT, not AOT). (defaults to on)'
+    description: 'Whether to track widget creation locations.'
     required: false
     default: 'true'
   config-only:
@@ -56,28 +56,31 @@ inputs:
     required: false
     default: 'false'
   code-size-directory:
-    description: 'The location to write code size analysis files. If this is not specified, files are written to a temporary directory under the build directory.'
+    description: 'The location to write code size analysis files.'
     required: false
 
 runs:
   using: 'composite'
   steps:
-    - name: Build windows app
+    - name: Add permissions
+      run: chmod +x $GITHUB_ACTION_PATH/windows.sh
       shell: bash
-      run: |
-        flutter build windows \
-          --${{ inputs.build-mode }} \
-          ${{ inputs.build-name != '' && format('--build-name={0}', inputs.build-name) || '' }} \
-          ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }} \
-          ${{ inputs.dart-define != '' && format('--dart-define={0}', inputs.dart-define) || '' }} \
-          ${{ inputs.dart-define-from-file != '' && format('--dart-define-from-file={0}', inputs.dart-define-from-file) || '' }} \
-          ${{ inputs.target != '' && format('--target={0}', inputs.target) || '' }} \
-          ${{ inputs.track-widget-creation == 'true' && '--track-widget-creation' || '' }} \
-          ${{ inputs.config-only == 'true' && '--config-only' || '' }} \
-          ${{ inputs.obfuscate == 'false' && '--no-obfuscate' || '' }} \
-          ${{ inputs.no-pub == 'true' && '--no-pub' || '' }} \
-          ${{ inputs.split-debug-info != '' && format('--split-debug-info={0}', inputs.split-debug-info) || '' }} \
-          ${{ inputs.no-tree-shake-icons == 'true' && '--no-tree-shake-icons' || '' }} \
-          ${{ inputs.no-analyze-size == 'true' && '--no-analyze-size' || '' }} \
-          ${{ inputs.code-size-directory != '' && format('--code-size-directory={0}', inputs.code-size-directory) || '' }}
 
+    - name: Build Windows app
+      env:
+        BUILD_MODE: ${{ inputs.build-mode }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        NO_PUB: ${{ inputs.no-pub }}
+        OBFUSCATE: ${{ inputs.obfuscate }}
+        SPLIT_DEBUG_INFO: ${{ inputs.split-debug-info }}
+        NO_TREE_SHAKE_ICONS: ${{ inputs.no-tree-shake-icons }}
+        NO_ANALYZE_SIZE: ${{ inputs.no-analyze-size }}
+        DART_DEFINE: ${{ inputs.dart-define }}
+        DART_DEFINE_FROM_FILE: ${{ inputs.dart-define-from-file }}
+        TARGET: ${{ inputs.target }}
+        TRACK_WIDGET_CREATION: ${{ inputs.track-widget-creation }}
+        CONFIG_ONLY: ${{ inputs.config-only }}
+        CODE_SIZE_DIRECTORY: ${{ inputs.code-size-directory }}
+      run: $GITHUB_ACTION_PATH/windows.sh
+      shell: bash
